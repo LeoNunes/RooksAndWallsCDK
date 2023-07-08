@@ -1,31 +1,12 @@
 #!/usr/bin/env node
 import 'source-map-support/register';
 import * as cdk from 'aws-cdk-lib';
-import { RooksAndWallsStack } from '../lib/rooks_and_walls_stack';
 import { CdkPipeline } from '../lib/cdk_pipeline';
-import { RepoConfig } from '../lib/common';
-
-const gitHubConfig = {
-    owner: 'LeoNunes',
-    // Connection must be created manually on the AWS Console
-    connectionARN: 'arn:aws:codestar-connections:sa-east-1:641179121252:connection/4c171f9b-5424-4003-b7e3-ea9f41c7a7ca',
-}
-
-const config = {
-    appName: 'RooksAndWallsTest',
-    cdkPipeline: {
-        repo: {
-            ...gitHubConfig,
-            name: 'RooksAndWallsCDK',
-            branch: 'main',
-        } as RepoConfig,
-    },
-};
+import config from './config';
 
 const app = new cdk.App();
 new CdkPipeline(app, `${config.appName}CdkPipelineStack`, {
-    appName: config.appName,
-    repo: config.cdkPipeline.repo,
+    ...config,
 
     /* If you don't specify 'env', this stack will be environment-agnostic.
     * Account/Region-dependent features and context lookups will not work,

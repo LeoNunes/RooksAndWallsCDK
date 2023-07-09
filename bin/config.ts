@@ -1,32 +1,50 @@
-import { Environment } from "aws-cdk-lib";
+import { Immutable, NonEmptyArray } from "../lib/helper/type_helper";
 
-export interface AppConfig {
+export type AppConfig = Immutable<{
     appName: string;
     cdk: CdkConfig;
     backend: BackendConfig;
-}
+}>
 
-export interface CdkConfig {
+export type CdkConfig = Immutable<{
     pipeline: {
         repo: RepoConfig;
     };
-}
+}>
 
-export interface BackendConfig {
+export type BackendConfig = Immutable<{
     pipeline: {
         repo: RepoConfig;
     };
-    environments: { name: string; description?: string }[];
-    // stages?: { account: string; region: string }[]; 
-}
+    awsEnvironments?: { // Not currently supported
+        name: string;
+        account?: string;
+        region?: string;
+    }[];
+    environments: NonEmptyArray<{
+        name: string;
+        description?: string;
+        deployment?: {
+            wave?: number;
+        };
+        autoscaling?: {
+            minInstances?: number;
+            maxInstances?: number;
+            instanceTypes?: string;
+        };
+        loadBalancer?: {};  // Not currently supported
+        awsEnvironment?: string; // Not currently supported
+    }>;
+}>
 
-export interface RepoConfig {
+export type RepoConfig = Immutable<{
     owner: string;
     name: string;
     branch: string;
     connectionARN: string;
-};
+}>
 
+const appName = 'RooksAndWallsTest';
 const gitHubConfig = {
     owner: 'LeoNunes',
     // Connection must be created manually on the AWS Console
@@ -34,7 +52,7 @@ const gitHubConfig = {
 };
 
 const config: AppConfig = {
-    appName: 'RooksAndWallsTest',
+    appName: appName,
     cdk: {
         pipeline: {
             repo: {
@@ -46,7 +64,13 @@ const config: AppConfig = {
     },
     backend: {
         environments: [
-            { name: 'Prod' },
+            {
+                name: 'Prod',
+                description: `Prod environment for ${appName}`,
+                deployment: {
+                    wave: 0,
+                },
+            },
         ],
         pipeline: {
             repo: {

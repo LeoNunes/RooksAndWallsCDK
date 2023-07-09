@@ -1,21 +1,15 @@
 import { Construct } from "constructs";
 import * as elasticbeanstalk from 'aws-cdk-lib/aws-elasticbeanstalk';
 import * as iam from 'aws-cdk-lib/aws-iam';
+import { BackendConfig } from "../../bin/config";
 
-interface ElasticBeanstalkAppProps {
+interface ElasticBeanstalkAppProps extends BackendConfig {
     appName: string;
-    environments: {
-        name: string;
-        description?: string;
-        minInstances?: number;
-        maxInstances?: number;
-        instanceTypes?: string;
-    }[];
 }
 
 export class ElasticBeanstalkApp extends Construct {
     constructor(scope: Construct, id: string, props: ElasticBeanstalkAppProps) {
-        super(scope, id)
+        super(scope, id);
 
         const ebInstanceRole = new iam.Role(this, `${props.appName}-elasticbeanstalk-ec2-role`, {
             assumedBy: new iam.ServicePrincipal('ec2.amazonaws.com'),
@@ -71,17 +65,17 @@ export class ElasticBeanstalkApp extends Construct {
                     {
                         namespace: 'aws:autoscaling:launchconfiguration',
                         optionName: 'InstanceType',
-                        value: environment.instanceTypes ?? 't3.micro',
+                        value: environment.autoscaling?.instanceTypes ?? 't3.micro',
                     },
                     {
                         namespace: 'aws:autoscaling:asg',
                         optionName: 'MinSize',
-                        value: environment.minInstances?.toString() ?? '1',
+                        value: environment.autoscaling?.minInstances?.toString() ?? '1',
                     },
                     {
                         namespace: 'aws:autoscaling:asg',
                         optionName: 'MaxSize',
-                        value: environment.maxInstances?.toString() ?? '1',
+                        value: environment.autoscaling?.maxInstances?.toString() ?? '1',
                     },
                     // Consider using Application LoadBalancer:
                     // https://stackoverflow.com/questions/60532956/get-a-handle-for-the-application-load-balancer-for-an-elastic-beanstalk-environm

@@ -2,8 +2,7 @@ import * as cdk from 'aws-cdk-lib';
 import { Construct } from 'constructs';
 import { CodePipeline, CodePipelineSource, ShellStep } from 'aws-cdk-lib/pipelines';
 import * as s3 from 'aws-cdk-lib/aws-s3';
-import { RemovalPolicy } from 'aws-cdk-lib';
-import { BackendServiceStage } from './backend_service_stack';
+import { BackendServiceStage } from './backend/backend_service_stack';
 import { AppConfig } from '../bin/config';
 
 interface CdkPipelineProps extends cdk.StackProps, AppConfig { }
@@ -14,7 +13,7 @@ export class CdkPipeline extends cdk.Stack {
         super(scope, id, props);
 
         const artifactBucket = new s3.Bucket(this, 'ArtifactBucket', {
-            removalPolicy: RemovalPolicy.DESTROY,
+            removalPolicy: cdk.RemovalPolicy.DESTROY,
             autoDeleteObjects: true,
         });
 
@@ -35,8 +34,7 @@ export class CdkPipeline extends cdk.Stack {
             stackProps: {
                 appName: props.appName,
                 stackName: `${props.appName}BackendStack`,
-                description: `${this.stackName}`,
-                environments: props.backend.environments,
+                ...props.backend
             },
         });
 

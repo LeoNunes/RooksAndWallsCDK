@@ -1,24 +1,26 @@
 import * as cdk from 'aws-cdk-lib';
 import { Construct } from 'constructs';
 import { ElasticBeanstalkApp } from './eb_application';
+import { BackendPipeline } from './pipeline';
+import { BackendConfig } from '../../bin/config';
 
-
-interface BackendServiceStackProps extends cdk.StackProps {
+interface BackendServiceStackProps extends cdk.StackProps, BackendConfig {
     appName: string;
-    environments: {
-        name: string;
-        description?: string;
-    }[];
 };
 
 export class BackendServiceStack extends cdk.Stack {
     constructor(scope: Construct, id: string, props: BackendServiceStackProps) {
         super(scope, id, props);
 
-        new ElasticBeanstalkApp(this, 'Backend-EB-App', {
-            appName: props.appName,
-            environments: props.environments,
+        const ebApp = new ElasticBeanstalkApp(this, 'Backend-EB-App', {
+            ...props,
         });
+
+        const pipeline = new BackendPipeline(this, 'Backend-Pipeline', {
+            ...props,
+        });
+
+        pipeline.node.addDependency(ebApp);
     }
 }
 

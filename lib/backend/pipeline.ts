@@ -20,14 +20,15 @@ export class BackendPipeline extends Construct {
             autoDeleteObjects: true,
         });
 
+        const pipelineName = `${props.appName}-BackendPipeline`
         const pipeline = new codepipeline.Pipeline(this, 'BackendPipeline', {
-            pipelineName: `${props.appName}-BackendPipeline`,
+            pipelineName: pipelineName,
             artifactBucket: artifactBucket,
         });
 
         const sourceOutput = new codepipeline.Artifact('SourceArtifact');
         const sourceAction = new codepipelineActions.CodeStarConnectionsSourceAction({
-            actionName: 'Backend-Repo',
+            actionName: `${props.pipeline.repo.owner}_${props.pipeline.repo.name}`,
             connectionArn: props.pipeline.repo.connectionARN,
             owner: props.pipeline.repo.owner,
             repo: props.pipeline.repo.name,
@@ -42,7 +43,8 @@ export class BackendPipeline extends Construct {
 
         const buildArtifact = new codepipeline.Artifact('BuildArtifact');
         const buildProject = new codeBuild.PipelineProject(this, 'BuildProject', {
-            projectName: `${props.appName}Build`,
+            projectName: `${props.appName}_PipelineBuild`,
+            description: `Build step for ${pipelineName} pipeline`,
             buildSpec: codeBuild.BuildSpec.fromSourceFilename('buildspec.yml'),
         });
         const buildAction = new codepipelineActions.CodeBuildAction({

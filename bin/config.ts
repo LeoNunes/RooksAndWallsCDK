@@ -32,9 +32,11 @@ export type BackendConfig = Immutable<{
             maxInstances?: number;
             instanceTypes?: string;
         };
-        loadBalancer?: {};  // Not currently supported
         awsEnvironment?: string; // Not currently supported
     }>;
+    loadBalancer?: {
+        instanceListeningPort?: number,
+    };
 }>
 
 export type RepoConfig = Immutable<{
@@ -78,6 +80,9 @@ const config: AppConfig = {
                 name: 'RooksAndWallsServer',
                 branch: 'main',
             },
+        },
+        loadBalancer: {
+            instanceListeningPort: 8080,
         },
     },
 };

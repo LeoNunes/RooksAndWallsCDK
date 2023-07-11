@@ -2,6 +2,7 @@ import { Immutable, NonEmptyArray } from "../lib/helper/type_helper";
 
 export type AppConfig = Immutable<{
     appName: string;
+    dns?: DnsConfig;
     cdk: CdkConfig;
     backend: BackendConfig;
 }>
@@ -16,14 +17,10 @@ export type BackendConfig = Immutable<{
     pipeline: {
         repo: RepoConfig;
     };
-    awsEnvironments?: { // Not currently supported
-        name: string;
-        account?: string;
-        region?: string;
-    }[];
     environments: NonEmptyArray<{
         name: string;
         description?: string;
+        subdomain?: string;
         deployment?: {
             wave?: number;
         };
@@ -32,11 +29,16 @@ export type BackendConfig = Immutable<{
             maxInstances?: number;
             instanceTypes?: string;
         };
-        awsEnvironment?: string; // Not currently supported
     }>;
     loadBalancer?: {
         instanceListeningPort?: number,
     };
+}>
+
+export type DnsConfig = Immutable<{
+    hostedZoneId: string;
+    hostedZoneName: string;
+    commonSubdomain?: string;
 }>
 
 export type RepoConfig = Immutable<{
@@ -55,6 +57,11 @@ const gitHubConfig = {
 
 const config: AppConfig = {
     appName: appName,
+    dns: {
+        hostedZoneId: 'Z06232281J47SNE8ZWHNB',
+        hostedZoneName: 'leonunes.me',
+        commonSubdomain: 'rw',
+    },
     cdk: {
         pipeline: {
             repo: {
@@ -69,6 +76,7 @@ const config: AppConfig = {
             {
                 name: 'Prod',
                 description: `Prod environment for ${appName}`,
+                subdomain: 'prod.api',
                 deployment: {
                     wave: 0,
                 },

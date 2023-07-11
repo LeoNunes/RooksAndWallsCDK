@@ -1,15 +1,25 @@
 import { Construct } from "constructs";
 import * as elasticbeanstalk from 'aws-cdk-lib/aws-elasticbeanstalk';
 import * as iam from 'aws-cdk-lib/aws-iam';
-import { BackendConfig } from "../../bin/config";
+import * as route53 from 'aws-cdk-lib/aws-route53';
+import { BackendConfig, DnsConfig } from "../../bin/config";
 
 interface ElasticBeanstalkAppProps extends BackendConfig {
     appName: string;
+    dns?: DnsConfig;
 }
 
 export class ElasticBeanstalkApp extends Construct {
     constructor(scope: Construct, id: string, props: ElasticBeanstalkAppProps) {
         super(scope, id);
+
+        let hostedZone: route53.IHostedZone | undefined = undefined;
+        if (props.dns) {
+            hostedZone = route53.HostedZone.fromHostedZoneAttributes(this, 'HostedZone', {
+                zoneName: props.dns.hostedZoneName,
+                hostedZoneId: props.dns.hostedZoneId,
+            });
+        }
 
         const ebInstanceRole = new iam.Role(this, `${props.appName}-elasticbeanstalk-ec2-role`, {
             assumedBy: new iam.ServicePrincipal('ec2.amazonaws.com'),
@@ -93,7 +103,30 @@ export class ElasticBeanstalkApp extends Construct {
 
             ebEnv.addDependency(ebApp);
 
-            // DNS: https://docs.aws.amazon.com/Route53/latest/DeveloperGuide/routing-to-beanstalk-environment.html#routing-to-beanstalk-environment-create-alias-procedure
+            if (hostedZone && environment.subdomain) {
+                // ElasticBeanstalkEnvironmentEndpointTarget (aws-cdk-lib/aws-route53-targets) doesn't support Tokens.
+                // A hardcoded value for the ebEnv.attrEndpointUrl would be needed. Below is the workaround
+                // As the stack is currently agnostic of region, it is hardcoded to sa-east-1.
+                // https://github.com/aws/aws-cdk/pull/16305
+                // https://github.com/aws/aws-cdk/issues/3206
+
+                // Create a hosted zone for the app subdomain?
+
+                const recordTarget: route53.IAliasRecordTarget = {
+                    bind: (): route53.AliasRecordTargetConfig => ({
+                        dnsName: ebEnv.attrEndpointUrl,
+                        hostedZoneId: 'Z2P70J7HTTTPLU', // Hardcoded for sa-east-1 https://docs.aws.amazon.com/general/latest/gr/elb.html
+                    }),
+                };
+
+                const dnsRecord = new route53.ARecord(this, `DNS_ARecord_${props.appName}_${environment.name}`, {
+                    recordName: environment.subdomain + (props.dns?.commonSubdomain ? `.${props.dns.commonSubdomain}` : ''),
+                    zone: hostedZone,
+                    target: route53.RecordTarget.fromAlias(recordTarget),
+                });
+
+                dnsRecord.node.addDependency(ebEnv);
+            }
         }
     }
 }

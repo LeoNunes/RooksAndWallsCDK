@@ -2,11 +2,12 @@ import * as cdk from 'aws-cdk-lib';
 import { Construct } from 'constructs';
 import { ElasticBeanstalkApp } from './eb_application';
 import { BackendPipeline } from './pipeline';
-import { BackendConfig } from '../../bin/config';
+import { BackendConfig, DnsConfig } from '../../bin/config';
 
 interface BackendServiceStackProps extends cdk.StackProps, BackendConfig {
     appName: string;
-};
+    dns?: DnsConfig;
+}
 
 export class BackendServiceStack extends cdk.Stack {
     constructor(scope: Construct, id: string, props: BackendServiceStackProps) {
@@ -26,7 +27,7 @@ export class BackendServiceStack extends cdk.Stack {
 
 interface BackendServiceStageProps extends cdk.StageProps {
     stackProps: BackendServiceStackProps
-};
+}
 
 export class BackendServiceStage extends cdk.Stage {
     constructor(scope: Construct, id: string, props: BackendServiceStageProps) {

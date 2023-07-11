@@ -20,7 +20,7 @@ export class BackendPipeline extends Construct {
             autoDeleteObjects: true,
         });
 
-        const pipelineName = `${props.appName}-BackendPipeline`
+        const pipelineName = `${props.appName}-BackendPipeline`;
         const pipeline = new codepipeline.Pipeline(this, 'BackendPipeline', {
             pipelineName: pipelineName,
             artifactBucket: artifactBucket,

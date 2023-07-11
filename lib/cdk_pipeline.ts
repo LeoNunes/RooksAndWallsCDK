@@ -11,7 +11,7 @@ interface CdkPipelineProps extends cdk.StackProps, AppConfig { }
 export class CdkPipeline extends cdk.Stack {
     constructor(scope: Construct, id: string, props: CdkPipelineProps) {
         super(scope, id, props);
-
+    
         const artifactBucket = new s3.Bucket(this, 'ArtifactBucket', {
             removalPolicy: cdk.RemovalPolicy.DESTROY,
             autoDeleteObjects: true,
@@ -33,6 +33,7 @@ export class CdkPipeline extends cdk.Stack {
         const backendStack = new BackendServiceStage(this, 'BackendServiceStage', {
             stackProps: {
                 appName: props.appName,
+                dns: props.dns,
                 stackName: `${props.appName}BackendStack`,
                 ...props.backend
             },

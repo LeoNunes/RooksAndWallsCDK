@@ -9,6 +9,7 @@ interface ElasticBeanstalkAppProps extends BackendConfig {
     dns?: DnsConfig;
 }
 
+// For future reference: https://github.com/aws-samples/aws-elastic-beanstalk-hardened-security-cdk-sample
 export class ElasticBeanstalkApp extends Construct {
     constructor(scope: Construct, id: string, props: ElasticBeanstalkAppProps) {
         super(scope, id);
@@ -80,6 +81,12 @@ export class ElasticBeanstalkApp extends Construct {
                     'aws:ec2:vpc': {
                         'AssociatePublicIpAddress': 'false',
                     },
+                    'aws:elasticbeanstalk:application': {
+                        'Application Healthcheck URL':
+                            (props.loadBalancer?.healthCheckProtocol || 'HTTP') + ':' +
+                            (props.loadBalancer?.instanceListeningPort || 80).toString() + '/' +
+                            removeLeading('/', props.loadBalancer?.healthCheckPath || '')
+                    },
                     'aws:elasticbeanstalk:cloudwatch:logs': {
                         'StreamLogs': 'true',
                         'DeleteOnTerminate': 'true',
@@ -147,4 +154,11 @@ function optionsHelper(option: Option) : Array<elasticbeanstalk.CfnEnvironment.O
                 value: option[namespace][optionName],
             }))
     );
+}
+
+function removeLeading(toRemove: string, string: string): string {
+    if (string.startsWith(toRemove)) {
+        return string.substring(toRemove.length);
+    }
+    return string;
 }

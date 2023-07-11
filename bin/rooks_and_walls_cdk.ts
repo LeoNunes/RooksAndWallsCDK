@@ -6,6 +6,7 @@ import config from './config';
 
 const app = new cdk.App();
 new CdkPipeline(app, `${config.appName}CdkPipelineStack`, {
+    description: `CDK Pipeline Stack for ${config.appName}`,
     ...config,
 
     /* If you don't specify 'env', this stack will be environment-agnostic.

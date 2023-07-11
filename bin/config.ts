@@ -31,7 +31,9 @@ export type BackendConfig = Immutable<{
         };
     }>;
     loadBalancer?: {
-        instanceListeningPort?: number,
+        instanceListeningPort?: number;
+        healthCheckProtocol?: 'HTTP' | 'HTTPS';
+        healthCheckPath?: string;
     };
 }>
 
@@ -91,6 +93,8 @@ const config: AppConfig = {
         },
         loadBalancer: {
             instanceListeningPort: 8080,
+            healthCheckProtocol: 'HTTP',
+            healthCheckPath: '/ping',
         },
     },
 };

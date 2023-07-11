@@ -35,6 +35,7 @@ export class CdkPipeline extends cdk.Stack {
                 appName: props.appName,
                 dns: props.dns,
                 stackName: `${props.appName}BackendStack`,
+                description: `Backend Stack for ${props.appName} managed by ${this.stackName}`,
                 ...props.backend
             },
         });

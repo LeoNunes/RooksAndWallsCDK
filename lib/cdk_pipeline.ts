@@ -2,6 +2,7 @@ import * as cdk from 'aws-cdk-lib';
 import { Construct } from 'constructs';
 import { CodePipeline, CodePipelineSource, ShellStep } from 'aws-cdk-lib/pipelines';
 import * as s3 from 'aws-cdk-lib/aws-s3';
+import * as logs from 'aws-cdk-lib/aws-logs';
 import { BackendServiceStage } from './backend/backend_service_stack';
 import { AppConfig } from '../bin/config';
 
@@ -28,6 +29,39 @@ export class CdkPipeline extends cdk.Stack {
                 commands: ['npm ci', 'npm run build', 'npx cdk synth']
             }),
             artifactBucket: artifactBucket,
+            synthCodeBuildDefaults: {
+                logging: {
+                    cloudWatch: {
+                        logGroup: new logs.LogGroup(this, 'SynthLogGroup', {
+                            logGroupName: `${props.appName}/CDKPipeline/Synth/`,
+                            retention: logs.RetentionDays.ONE_WEEK,
+                            removalPolicy: cdk.RemovalPolicy.DESTROY,
+                        }),
+                    },
+                },
+            },
+            selfMutationCodeBuildDefaults: {
+                logging: {
+                    cloudWatch: {
+                        logGroup: new logs.LogGroup(this, 'SelfMutationLogGroup', {
+                            logGroupName: `${props.appName}/CDKPipeline/SelfMutation/`,
+                            retention: logs.RetentionDays.ONE_WEEK,
+                            removalPolicy: cdk.RemovalPolicy.DESTROY,
+                        }),
+                    },
+                },
+            },
+            assetPublishingCodeBuildDefaults: {
+                logging: {
+                    cloudWatch: {
+                        logGroup: new logs.LogGroup(this, 'AssetPublishingLogGroup', {
+                            logGroupName: `${props.appName}/CDKPipeline/AssetPublishing/`,
+                            retention: logs.RetentionDays.ONE_WEEK,
+                            removalPolicy: cdk.RemovalPolicy.DESTROY,
+                        }),
+                    },
+                },
+            },
         });
 
         const backendStack = new BackendServiceStage(this, 'BackendServiceStage', {

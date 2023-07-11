@@ -4,6 +4,7 @@ import * as s3 from 'aws-cdk-lib/aws-s3';
 import * as codepipeline from 'aws-cdk-lib/aws-codepipeline';
 import * as codepipelineActions from 'aws-cdk-lib/aws-codepipeline-actions';
 import * as codeBuild from 'aws-cdk-lib/aws-codebuild';
+import * as logs from "aws-cdk-lib/aws-logs";
 import { BackendConfig } from "../../bin/config";
 import { groupBy } from "../helper/collections";
 
@@ -43,9 +44,18 @@ export class BackendPipeline extends Construct {
 
         const buildArtifact = new codepipeline.Artifact('BuildArtifact');
         const buildProject = new codeBuild.PipelineProject(this, 'BuildProject', {
-            projectName: `${props.appName}_PipelineBuild`,
+            projectName: `${props.appName}_BackendPipelineBuild`,
             description: `Build step for ${pipelineName} pipeline`,
             buildSpec: codeBuild.BuildSpec.fromSourceFilename('buildspec.yml'),
+            logging: {
+                cloudWatch: {
+                    logGroup: new logs.LogGroup(this, 'BuildProjectLogGroup', {
+                        logGroupName: `${props.appName}/BackendPipeline/Build/`,
+                        retention: logs.RetentionDays.ONE_WEEK,
+                        removalPolicy: cdk.RemovalPolicy.DESTROY,
+                    }),
+                },
+            },
         });
         const buildAction = new codepipelineActions.CodeBuildAction({
             actionName: 'Build',

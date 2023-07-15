@@ -1,12 +1,12 @@
-import { Construct } from "constructs";
+import { Construct } from 'constructs';
 import * as elasticbeanstalk from 'aws-cdk-lib/aws-elasticbeanstalk';
 import * as iam from 'aws-cdk-lib/aws-iam';
 import * as route53 from 'aws-cdk-lib/aws-route53';
-import { BackendConfig, DnsConfig } from "../../bin/config";
+import { BackendConfig, DnsConfig } from '../../bin/config_def';
 
 interface ElasticBeanstalkAppProps extends BackendConfig {
-    appName: string;
-    dns?: DnsConfig;
+  appName: string;
+  dns?: DnsConfig;
 }
 
 // For future reference: https://github.com/aws-samples/aws-elastic-beanstalk-hardened-security-cdk-sample
@@ -71,21 +71,22 @@ export class ElasticBeanstalkApp extends Construct {
                 optionSettings: optionsHelper({
                     'aws:autoscaling:launchconfiguration': {
                         'IamInstanceProfile': profileName,
-                        'InstanceType': environment.autoscaling?.instanceTypes ?? 't3.micro',
+                        'InstanceType': environment.autoscaling.instanceTypes,
                         'DisableIMDSv1': 'true',
                     },
                     'aws:autoscaling:asg': {
-                        'MinSize': environment.autoscaling?.minInstances?.toString() ?? '1',
-                        'MaxSize': environment.autoscaling?.maxInstances?.toString() ?? '1',
+                        'MinSize': environment.autoscaling.minInstances.toString(),
+                        'MaxSize': environment.autoscaling.maxInstances.toString(),
                     },
-                    'aws:ec2:vpc': {
-                        'AssociatePublicIpAddress': 'false',
-                    },
+                    // 'aws:ec2:vpc': {
+                    //     // https://repost.aws/questions/QUARH0e87FTfaBKPm0BFCmrA/do-elastic-beanstalk-web-server-environment-need-a-public-elastic-ip
+                    //     'AssociatePublicIpAddress': 'false',
+                    // },
                     'aws:elasticbeanstalk:application': {
                         'Application Healthcheck URL':
-                            (props.loadBalancer?.healthCheckProtocol || 'HTTP') + ':' +
-                            (props.loadBalancer?.instanceListeningPort || 80).toString() + '/' +
-                            removeLeading('/', props.loadBalancer?.healthCheckPath || '')
+                            props.loadBalancer.healthCheckProtocol + ':' +
+                            props.loadBalancer.instanceListeningPort.toString() + '/' +
+                            removeLeading('/', props.loadBalancer.healthCheckPath)
                     },
                     'aws:elasticbeanstalk:cloudwatch:logs': {
                         'StreamLogs': 'true',
@@ -100,7 +101,7 @@ export class ElasticBeanstalkApp extends Construct {
                         'UpdateLevel': 'minor',
                     },
                     'aws:elb:listener': {
-                        'InstancePort': props.loadBalancer?.instanceListeningPort?.toString(),
+                        'InstancePort': props.loadBalancer.instanceListeningPort.toString(),
                     },
                     // Consider using Application LoadBalancer. 'aws:elb:listener' namespace is just for classic load balancer
                     // https://docs.aws.amazon.com/elasticbeanstalk/latest/dg/environments-cfg-alb.html

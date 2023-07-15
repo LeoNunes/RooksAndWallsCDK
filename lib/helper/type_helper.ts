@@ -1,19 +1,22 @@
 export type NonEmptyArray<T> = [T, ...T[]];
+export type ReadonlyNonEmptyArray<T> = readonly [T, ...T[]];
+export type EmptyObject = Record<keyof any, never>;
 
-type Primitives = undefined | null | boolean | string | number | Function;
+export type Primitives = undefined | null | boolean | string | number | bigint | symbol | Function;
 
 export type Immutable<T> =
     T extends Primitives ? T :
-    T extends Array<infer U> ? ImmutableArray<U> :
-    T extends Map<infer K, infer V> ? ImmutableMap<K, V> :
-    T extends Set<infer M> ? ImmutableSet<M> :
+    T extends NonEmptyArray<infer A> ? ImmutableNonEmptyArray<A> :
+    T extends Array<infer B> ? ImmutableArray<B> :
+    T extends Map<infer C, infer D> ? ImmutableMap<C, D> :
+    T extends Set<infer E> ? ImmutableSet<E> :
     ImmutableObject<T>;
 
+export type ImmutableNonEmptyArray<T> = ReadonlyNonEmptyArray<Immutable<T>>;
 export type ImmutableArray<T> = ReadonlyArray<Immutable<T>>;
 export type ImmutableMap<K, V> = ReadonlyMap<Immutable<K>, Immutable<V>>;
 export type ImmutableSet<T> = ReadonlySet<Immutable<T>>;
 export type ImmutableObject<T> = { readonly [K in keyof T]: Immutable<T[K]> };
-
 
 export type DeepRequired<T> = 
     T extends Array<infer U> ? DeepRequiredArray<U> :

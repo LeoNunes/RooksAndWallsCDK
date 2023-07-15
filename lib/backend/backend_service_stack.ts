@@ -2,7 +2,7 @@ import * as cdk from 'aws-cdk-lib';
 import { Construct } from 'constructs';
 import { ElasticBeanstalkApp } from './eb_application';
 import { BackendPipeline } from './pipeline';
-import { BackendConfig, DnsConfig } from '../../bin/config';
+import { BackendConfig, DnsConfig } from '../../bin/config_def';
 
 interface BackendServiceStackProps extends cdk.StackProps, BackendConfig {
     appName: string;

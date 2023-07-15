@@ -1,12 +1,12 @@
-import { Construct } from "constructs";
-import * as cdk from "aws-cdk-lib";
+import { Construct } from 'constructs';
+import * as cdk from 'aws-cdk-lib';
 import * as s3 from 'aws-cdk-lib/aws-s3';
 import * as codepipeline from 'aws-cdk-lib/aws-codepipeline';
 import * as codepipelineActions from 'aws-cdk-lib/aws-codepipeline-actions';
 import * as codeBuild from 'aws-cdk-lib/aws-codebuild';
-import * as logs from "aws-cdk-lib/aws-logs";
-import { BackendConfig } from "../../bin/config";
-import { groupBy } from "../helper/collections";
+import * as logs from 'aws-cdk-lib/aws-logs';
+import { BackendConfig } from '../../bin/config_def';
+import { groupBy } from '../helper/collections';
 
 interface BackendPipelineProps extends BackendConfig {
     appName: string;
@@ -69,7 +69,7 @@ export class BackendPipeline extends Construct {
             actions: [buildAction],
         });
 
-        const waves = groupBy(props.environments, (env => env.deployment?.wave ?? 0));
+        const waves = groupBy(props.environments, (env => env.deployment.wave));
         const waveNumbers = Object.keys(waves).map(Number).sort();
 
         for (const waveNumber of waveNumbers) {

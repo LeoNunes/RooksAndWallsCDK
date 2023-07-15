@@ -4,7 +4,7 @@ import { CodePipeline, CodePipelineSource, ShellStep } from 'aws-cdk-lib/pipelin
 import * as s3 from 'aws-cdk-lib/aws-s3';
 import * as logs from 'aws-cdk-lib/aws-logs';
 import { BackendServiceStage } from './backend/backend_service_stack';
-import { AppConfig } from '../bin/config';
+import { AppConfig } from '../bin/config_def';
 
 interface CdkPipelineProps extends cdk.StackProps, AppConfig { }
 

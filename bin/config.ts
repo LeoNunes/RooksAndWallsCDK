@@ -38,10 +38,12 @@ export default finalConfig({
                 branch: 'main',
             },
         },
-        loadBalancer: {
-            instanceListeningPort: 8080,
-            healthCheckProtocol: 'HTTP',
-            healthCheckPath: '/ping',
+        application: {
+            listeningPort: 8080,
+        },
+        healthCheck: {
+            protocol: 'HTTP',
+            path: '/ping',
         },
     },
 });

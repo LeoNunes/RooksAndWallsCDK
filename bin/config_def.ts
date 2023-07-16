@@ -1,5 +1,12 @@
 import { NonEmptyArray } from '../lib/helper/type_helper';
-import { ConfigType, DefaultConfigType, FinalConfigType, NoDefault, generateFinalConfig } from '../lib/helper/config_helper';
+import {
+    ConfigType,
+    DefaultConfigType,
+    FinalConfigType,
+    NoDefault,
+    NullableDefault,
+    generateFinalConfig
+} from '../lib/helper/config_helper';
 
 type ConfigDef = {
     appName: string;
@@ -18,6 +25,10 @@ type BackendConfigDef = {
     pipeline: {
         repo: RepoConfigDef;
     };
+    awsEnvironment?: {
+        account?: NullableDefault<string>;
+        region?: string;
+    };
     environments: NonEmptyArray<{
         name: string;
         description?: NoDefault<string>;
@@ -32,10 +43,12 @@ type BackendConfigDef = {
             instanceTypes?: string;
         };
     }>;
-    loadBalancer?: {
-        instanceListeningPort?: number;
-        healthCheckProtocol?: 'HTTP' | 'HTTPS';
-        healthCheckPath?: string;
+    application?: {
+        listeningPort?: number;
+    };
+    healthCheck?: {
+        protocol?: 'HTTP' | 'HTTPS';
+        path?: string;
     };
 }
 
@@ -54,6 +67,11 @@ type RepoConfigDef = {
 
 const defaultConfig: DefaultConfigType<ConfigDef> = {
     backend_defaults: {
+        awsEnvironment: {},
+        awsEnvironment_defaults: {
+            account: process.env.CDK_DEFAULT_ACCOUNT,
+            region: 'us-west-2',
+        },
         environments_defaults: {
             autoscaling: {},
             autoscaling_defaults: {
@@ -67,13 +85,16 @@ const defaultConfig: DefaultConfigType<ConfigDef> = {
                 wave: 0
             },
         },
-        loadBalancer: {},
-        loadBalancer_defaults: {
-            healthCheckPath: '/',
-            healthCheckProtocol: 'HTTP',
-            instanceListeningPort: 80,
-        }
-    }
+        application: {},
+        application_defaults: {
+            listeningPort: 80,
+        },
+        healthCheck: {},
+        healthCheck_defaults: {
+            protocol: 'HTTP',
+            path: '/',
+        },
+    },
 };
 
 export function finalConfig(config: ConfigType<ConfigDef>) {

@@ -1,5 +1,8 @@
 import { EmptyObject, Immutable, NonEmptyArray, Primitives, ReadonlyNonEmptyArray } from './type_helper';
 
+const nullableDefault = Symbol();
+export type NullableDefault<T> = T & { [nullableDefault]: true };
+
 const noDefault = Symbol();
 export type NoDefault<T> = T & { [noDefault]: true; };
 export type DeepNoDefault<T> = 
@@ -12,16 +15,18 @@ export type DeepNoDefault<T> =
 type RemoveMarkers<T> = 
     undefined extends T ? RemoveMarkers<NonNullable<T>> | undefined :
     T extends NoDefault<infer A> ? RemoveMarkers<A> :
-    T extends NonEmptyArray<infer B> ? NonEmptyArray<RemoveMarkers<B>> :
-    T extends Array<infer C> ? Array<RemoveMarkers<C>> :
+    T extends NullableDefault<infer B> ? RemoveMarkers<B> :
+    T extends NonEmptyArray<infer C> ? NonEmptyArray<RemoveMarkers<C>> :
+    T extends Array<infer D> ? Array<RemoveMarkers<D>> :
     T extends object ? { [Key in keyof T]: RemoveMarkers<T[Key]> } :
     T;
 
 type RemoveOptional<T> =
     undefined extends T ? RemoveOptional<NonNullable<T>> | undefined :
     T extends NoDefault<infer A> ? NoDefault<RemoveOptional<A>> :
-    T extends NonEmptyArray<infer B> ? NonEmptyArray<RemoveOptional<B>> :
-    T extends Array<infer C> ? Array<RemoveOptional<C>> :
+    T extends NullableDefault<infer B> ? NullableDefault<RemoveOptional<B>> :
+    T extends NonEmptyArray<infer C> ? NonEmptyArray<RemoveOptional<C>> :
+    T extends Array<infer D> ? Array<RemoveOptional<D>> :
     T extends object ? RemoveOptionalFromObject<T, KeysToRemoveOptional<T>> :
     T;
 
@@ -32,7 +37,11 @@ type RemoveOptionalFromObject<T, Keys extends keyof T> = {
 };
 
 type KeysToRemoveOptional<T> = keyof {
-    [K in keyof T as (T[K] extends (NoDefault<unknown> | undefined) ? never : K)]: never;
+    [K in keyof T as (
+        T[K] extends (NoDefault<unknown> | undefined) ? never :
+        T[K] extends (NullableDefault<unknown> | undefined) ? never :
+        K
+    )]: never;
 };
 
 type RemovePropertiesThatDoesntNeedDefault<T> = {
@@ -41,6 +50,10 @@ type RemovePropertiesThatDoesntNeedDefault<T> = {
             NonNullable<T[K]> extends NoDefault<unknown> ? never : K
         ) : never
     )]-?: NonNullable<T[K]>;
+};
+
+type MarkNullableDefaultPropertiesAsNullable<T> = {
+    [K in keyof T]: T[K] extends NullableDefault<unknown> ? T[K] | undefined : T[K];
 };
 
 type GenerateDefaultProperties<T> = {
@@ -52,12 +65,12 @@ type GenerateDefaultProperties<T> = {
     )]-?: Default<T[K]>;
 };
 
+type DefaultObject<T> = MarkNullableDefaultPropertiesAsNullable<RemovePropertiesThatDoesntNeedDefault<T>> & GenerateDefaultProperties<T>;
+
 type Default<T> =
     T extends Array<infer A> ? Default<A> :
     T extends object ? DefaultObject<T> :
     T;
-
-type DefaultObject<T> = RemovePropertiesThatDoesntNeedDefault<T> & GenerateDefaultProperties<T>;
 
 type EnforceEmptyObjectType<T> = T extends EmptyObject ? EmptyObject : T;
 

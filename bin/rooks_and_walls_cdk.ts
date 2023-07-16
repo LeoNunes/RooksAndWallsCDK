@@ -7,6 +7,10 @@ import config from './config';
 const app = new cdk.App();
 new CdkPipeline(app, `${config.appName}CdkPipelineStack`, {
     description: `CDK Pipeline Stack for ${config.appName}`,
+    env: {
+        account: config.backend.awsEnvironment.account,
+        region: config.backend.awsEnvironment.region,
+    },
     ...config,
 
     /* If you don't specify 'env', this stack will be environment-agnostic.

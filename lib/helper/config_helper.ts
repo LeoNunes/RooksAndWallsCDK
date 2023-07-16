@@ -82,7 +82,7 @@ export function generateFinalConfig<ConfigDef extends object>(config: ConfigType
     return generateFinalConfigRecursive(config, defaults) as FinalConfigType<ConfigDef>;
 }
 
-function generateFinalConfigRecursive(config: object, defaults: object) : object {
+function generateFinalConfigRecursive(config: object, defaults: object): object {
     const result: Record<string, any> = {};
 
     const keys = new Set<string>(
@@ -92,12 +92,12 @@ function generateFinalConfigRecursive(config: object, defaults: object) : object
 
     for (const key of keys) {
         const property = (config as any)[key] || (defaults as any)[key];
-        const defaultsProperty = (defaults as any)[`${key}_defaults`]
+        const defaultsProperty = (defaults as any)[`${key}_defaults`];
 
         if (Array.isArray(property)) {
             result[key] = property.map(p => {
                 if (typeof p === 'object') {
-                    return generateFinalConfigRecursive(p || {}, defaultsProperty || {})
+                    return generateFinalConfigRecursive(p || {}, defaultsProperty || {});
                 }
                 return p;
             });

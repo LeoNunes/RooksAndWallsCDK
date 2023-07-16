@@ -23,34 +23,45 @@ export class ElasticBeanstalkApp extends Construct {
         }
 
         const ebInstanceRole = new iam.Role(this, `${props.appName}-elasticbeanstalk-ec2-role`, {
+            roleName: `${props.appName}-instance-role`,
             assumedBy: new iam.ServicePrincipal('ec2.amazonaws.com'),
         });
-          
-        const webTierPolicy = iam.ManagedPolicy.fromAwsManagedPolicyName('AWSElasticBeanstalkWebTier');
-        ebInstanceRole.addManagedPolicy(webTierPolicy);
-          
-        const profileName = `${props.appName}-instance-profile`;
-        const instanceProfile = new iam.CfnInstanceProfile(this, profileName, {
-            instanceProfileName: profileName,
+        ebInstanceRole.addManagedPolicy(
+            iam.ManagedPolicy.fromAwsManagedPolicyName('AWSElasticBeanstalkWebTier')
+        );
+
+        const instanceProfileName = `${props.appName}-instance-profile`;
+        const instanceProfile = new iam.CfnInstanceProfile(this, instanceProfileName, {
+            instanceProfileName: instanceProfileName,
             roles: [
                 ebInstanceRole.roleName
             ],
         });
 
+        const ebServiceRole = new iam.Role(this, `${props.appName}-elasticbeanstalk-service-role`, {
+            roleName: `${props.appName}-service-role`,
+            assumedBy: new iam.ServicePrincipal('elasticbeanstalk.amazonaws.com'),
+        });
+        ebServiceRole.addManagedPolicy(
+            iam.ManagedPolicy.fromAwsManagedPolicyName('AWSElasticBeanstalkManagedUpdatesCustomerRolePolicy')
+        );
+        ebServiceRole.addManagedPolicy(
+            iam.ManagedPolicy.fromAwsManagedPolicyName('service-role/AWSElasticBeanstalkEnhancedHealth')
+        );
+
         const ebApp = new elasticbeanstalk.CfnApplication(this, `EBApp_${props.appName}`, {
             applicationName: props.appName,
-            description: `Environment for the ${props.appName}. Managed by CDK.`,
-            // https://docs.aws.amazon.com/elasticbeanstalk/latest/dg/applications-lifecycle.html
-            // resourceLifecycleConfig: {
-            //     serviceRole: "", // Which permissions does the service role needs?
-            //     versionLifecycleConfig: {
-            //         maxCountRule: {
-            //             deleteSourceFromS3: true,
-            //             maxCount: 3,
-            //             enabled: true,
-            //         },
-            //     },
-            // }
+            description: `Application for ${props.appName}. Managed by CDK.`,
+            resourceLifecycleConfig: {
+                serviceRole: ebServiceRole.roleArn,
+                versionLifecycleConfig: {
+                    maxCountRule: {
+                        deleteSourceFromS3: true,
+                        maxCount: 3,
+                        enabled: true,
+                    },
+                },
+            },
         });
 
         ebApp.addDependency(instanceProfile);
@@ -70,7 +81,7 @@ export class ElasticBeanstalkApp extends Construct {
                 // Environment options: https://docs.aws.amazon.com/elasticbeanstalk/latest/dg/command-options-general.html
                 optionSettings: optionsHelper({
                     'aws:autoscaling:launchconfiguration': {
-                        'IamInstanceProfile': profileName,
+                        'IamInstanceProfile': instanceProfileName,
                         'DisableIMDSv1': 'true',
                     },
                     'aws:autoscaling:asg': {
@@ -96,6 +107,7 @@ export class ElasticBeanstalkApp extends Construct {
                     },
                     'aws:elasticbeanstalk:environment': {
                         'EnvironmentType': environment.autoscaling.enabled ? 'LoadBalanced' : 'SingleInstance',
+                        'ServiceRole': ebServiceRole.roleArn,
                     },
                     'aws:elasticbeanstalk:managedactions': {
                         'ManagedActionsEnabled': 'true',
@@ -118,15 +130,12 @@ export class ElasticBeanstalkApp extends Construct {
             ebEnv.addDependency(ebApp);
 
             if (hostedZone && environment.subdomain) {
-
                 let recordTarget: route53.RecordTarget;
                 if (environment.autoscaling.enabled) {
                     // ElasticBeanstalkEnvironmentEndpointTarget (aws-cdk-lib/aws-route53-targets) doesn't support Tokens.
                     // A hardcoded value for the ebEnv.attrEndpointUrl would be needed. Below is the workaround
                     // https://github.com/aws/aws-cdk/pull/16305
                     // https://github.com/aws/aws-cdk/issues/3206
-
-                    // Create a hosted zone for the app subdomain?
 
                     recordTarget = route53.RecordTarget.fromAlias({
                         bind: (): route53.AliasRecordTargetConfig => ({

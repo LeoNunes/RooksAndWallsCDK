@@ -78,7 +78,7 @@ const defaultConfig: DefaultConfigType<ConfigDef> = {
                 enabled: false,
                 minInstances: 1,
                 maxInstances: 1,
-                instanceTypes: 't3.micro',
+                instanceTypes: 't3.nano,t3.micro',
             },
             deployment: {},
             deployment_defaults: {

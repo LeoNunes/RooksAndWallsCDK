@@ -26,9 +26,9 @@ export default finalConfig({
     backend: {
         environments: [
             {
-                name: 'Prod',
-                description: `Prod environment for ${appName}`,
-                subdomain: 'prod.api',
+                name: 'Beta',
+                description: `Beta environment for ${appName}`,
+                subdomain: 'beta.api',
             },
         ],
         pipeline: {

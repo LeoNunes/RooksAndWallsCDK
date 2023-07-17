@@ -39,10 +39,9 @@ export default finalConfig({
             },
         },
         application: {
-            listeningPort: 8080,
+            servicePort: 8080,
         },
         healthCheck: {
-            protocol: 'HTTP',
             path: '/ping',
         },
     },

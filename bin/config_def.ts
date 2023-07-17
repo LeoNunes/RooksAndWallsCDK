@@ -44,7 +44,8 @@ type BackendConfigDef = {
         };
     }>;
     application?: {
-        listeningPort?: number;
+        nginxPort?: 80;
+        servicePort?: number;
     };
     healthCheck?: {
         protocol?: 'HTTP' | 'HTTPS';
@@ -87,7 +88,8 @@ const defaultConfig: DefaultConfigType<ConfigDef> = {
         },
         application: {},
         application_defaults: {
-            listeningPort: 80,
+            nginxPort: 80,
+            servicePort: 5000,
         },
         healthCheck: {},
         healthCheck_defaults: {

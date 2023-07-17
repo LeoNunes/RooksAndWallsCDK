@@ -98,8 +98,12 @@ export class ElasticBeanstalkApp extends Construct {
                     'aws:elasticbeanstalk:application': {
                         'Application Healthcheck URL':
                             props.healthCheck.protocol + ':' +
-                            props.application.listeningPort.toString() + '/' +
+                            props.application.nginxPort.toString() + '/' +
                             removeLeading('/', props.healthCheck.path),
+                    },
+                    'aws:elasticbeanstalk:application:environment': {
+                        // https://docs.aws.amazon.com/elasticbeanstalk/latest/dg/java-se-nginx.html
+                        'PORT': props.application.servicePort.toString(),
                     },
                     'aws:elasticbeanstalk:cloudwatch:logs': {
                         'StreamLogs': 'true',
@@ -118,7 +122,7 @@ export class ElasticBeanstalkApp extends Construct {
                         'UpdateLevel': 'minor',
                     },
                     'aws:elb:listener': {
-                        'InstancePort': props.application.listeningPort.toString(),
+                        'InstancePort': props.application.servicePort.toString(),
                     },
                     // Consider using Application LoadBalancer (aws:elasticbeanstalk:environment:LoadBalancerType).
                     // 'aws:elb:listener' namespace is just for classic load balancer

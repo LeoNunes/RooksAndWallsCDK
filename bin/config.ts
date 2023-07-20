@@ -24,13 +24,6 @@ export default finalConfig({
         },
     },
     backend: {
-        environments: [
-            {
-                name: 'Beta',
-                description: `Beta environment for ${appName}`,
-                subdomain: 'beta.api',
-            },
-        ],
         pipeline: {
             repo: {
                 ...gitHubConfig,
@@ -38,11 +31,19 @@ export default finalConfig({
                 branch: 'main',
             },
         },
-        application: {
-            servicePort: 8080,
-        },
-        healthCheck: {
-            path: '/ping',
-        },
+        environments: [
+            {
+                name: 'Beta',
+                description: `Beta environment for ${appName}`,
+                subdomain: 'beta.api',
+                application: {
+                    httpsEnabled: true,
+                    servicePort: 8080,
+                },
+                healthCheck: {
+                    path: '/ping',
+                },
+            },
+        ],
     },
 });

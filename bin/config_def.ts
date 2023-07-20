@@ -29,28 +29,7 @@ type BackendConfigDef = {
         account?: NullableDefault<string>;
         region?: string;
     };
-    environments: NonEmptyArray<{
-        name: string;
-        description?: NoDefault<string>;
-        subdomain?: NoDefault<string>;
-        deployment?: {
-            wave?: number;
-        };
-        autoscaling?: {
-            enabled?: boolean;
-            minInstances?: number;
-            maxInstances?: number;
-            instanceTypes?: string;
-        };
-    }>;
-    application?: {
-        nginxPort?: 80;
-        servicePort?: number;
-    };
-    healthCheck?: {
-        protocol?: 'HTTP' | 'HTTPS';
-        path?: string;
-    };
+    environments: NonEmptyArray<EnvironmentConfigDef>;
 }
 
 type DnsConfigDef = {
@@ -66,6 +45,32 @@ type RepoConfigDef = {
     connectionARN: string;
 }
 
+type EnvironmentConfigDef = {
+    name: string;
+    description?: NoDefault<string>;
+    subdomain?: NoDefault<string>;
+    deployment?: {
+        wave?: number;
+    };
+    instances?: {
+        /** If autoscaling is disabled the environment will be created with the SingleInstance mode */
+        autoscalingEnabled?: boolean;
+        minInstances?: number;
+        maxInstances?: number;
+        instanceTypes?: string;
+    };
+    application?: {
+        httpsEnabled?: boolean,
+        httpsEnforced?: boolean,
+        servicePort?: number;
+    };
+    healthCheck?: {
+        protocol?: 'HTTP' | 'HTTPS';
+        port?: number;
+        path?: string;
+    };
+}
+
 const defaultConfig: DefaultConfigType<ConfigDef> = {
     backend_defaults: {
         awsEnvironment: {},
@@ -74,9 +79,9 @@ const defaultConfig: DefaultConfigType<ConfigDef> = {
             region: 'us-west-2',
         },
         environments_defaults: {
-            autoscaling: {},
-            autoscaling_defaults: {
-                enabled: false,
+            instances: {},
+            instances_defaults: {
+                autoscalingEnabled: false,
                 minInstances: 1,
                 maxInstances: 1,
                 instanceTypes: 't3.nano,t3.micro',
@@ -85,16 +90,18 @@ const defaultConfig: DefaultConfigType<ConfigDef> = {
             deployment_defaults: {
                 wave: 0
             },
-        },
-        application: {},
-        application_defaults: {
-            nginxPort: 80,
-            servicePort: 5000,
-        },
-        healthCheck: {},
-        healthCheck_defaults: {
-            protocol: 'HTTP',
-            path: '/',
+            application: {},
+            application_defaults: {
+                httpsEnabled: false,
+                httpsEnforced: false,
+                servicePort: 5000,
+            },
+            healthCheck: {},
+            healthCheck_defaults: {
+                protocol: 'HTTP',
+                port: 80,
+                path: '/',
+            },
         },
     },
 };
@@ -107,4 +114,5 @@ export type CdkConfig = FinalConfigType<CdkConfigDef>;
 export type BackendConfig = FinalConfigType<BackendConfigDef>;
 export type DnsConfig = FinalConfigType<DnsConfigDef>;
 export type RepoConfig = FinalConfigType<RepoConfigDef>;
+export type EnvironmentConfig = FinalConfigType<EnvironmentConfigDef>;
 export type AppConfig = FinalConfigType<ConfigDef>;

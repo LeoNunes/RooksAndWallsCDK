@@ -4,7 +4,6 @@ import {
     DefaultConfigType,
     FinalConfigType,
     NoDefault,
-    NullableDefault,
     generateFinalConfig
 } from '../lib/helper/config_helper';
 
@@ -25,9 +24,9 @@ type BackendConfigDef = {
     pipeline: {
         repo: RepoConfigDef;
     };
-    awsEnvironment?: {
-        account?: NullableDefault<string>;
-        region?: string;
+    awsEnvironment: {
+        account: string;
+        region: string;
     };
     environments: NonEmptyArray<EnvironmentConfigDef>;
 }
@@ -53,7 +52,7 @@ type EnvironmentConfigDef = {
         wave?: number;
     };
     instances?: {
-        /** If autoscaling is disabled the environment will be created with the SingleInstance mode */
+        /** If autoscaling is disabled the environment will be created with the SingleInstance mode and no Load Balancer */
         autoscalingEnabled?: boolean;
         minInstances?: number;
         maxInstances?: number;
@@ -73,11 +72,6 @@ type EnvironmentConfigDef = {
 
 const defaultConfig: DefaultConfigType<ConfigDef> = {
     backend_defaults: {
-        awsEnvironment: {},
-        awsEnvironment_defaults: {
-            account: process.env.CDK_DEFAULT_ACCOUNT,
-            region: 'us-west-2',
-        },
         environments_defaults: {
             instances: {},
             instances_defaults: {

@@ -1,8 +1,4 @@
 import { Construct } from 'constructs';
-import * as elasticbeanstalk from 'aws-cdk-lib/aws-elasticbeanstalk';
-import * as iam from 'aws-cdk-lib/aws-iam';
-import * as route53 from 'aws-cdk-lib/aws-route53';
-import * as ec2 from 'aws-cdk-lib/aws-ec2';
 import { EbApplication } from './eb_application';
 import { BackendConfig, DnsConfig } from '../../bin/config_def';
 import { EbEnvironment } from './eb_environment';
@@ -46,10 +42,3 @@ export class Application extends Construct {
         }
     }
 }
-
-
-
-
-
-
-

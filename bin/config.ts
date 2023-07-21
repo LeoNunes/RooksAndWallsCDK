@@ -31,6 +31,10 @@ export default finalConfig({
                 branch: 'main',
             },
         },
+        awsEnvironment: {
+            account: '641179121252',
+            region: 'us-west-2',
+        },
         environments: [
             {
                 name: 'Beta',

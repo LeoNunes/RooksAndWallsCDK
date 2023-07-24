@@ -3,10 +3,12 @@ import * as cdk from "aws-cdk-lib";
 import * as elasticbeanstalk from 'aws-cdk-lib/aws-elasticbeanstalk';
 import * as ec2 from 'aws-cdk-lib/aws-ec2';
 import { EbApplication } from "./eb_application";
+import { CertificatesBucket } from "./certificates_bucket";
 import { EnvironmentConfig } from "../../bin/config_def";
 
 interface EbEnvironmentProps extends EnvironmentConfig {
     ebApplication: EbApplication;
+    certificatesBucket?: CertificatesBucket;
 }
 
 export class EbEnvironment extends Construct {
@@ -69,6 +71,7 @@ export class EbEnvironment extends Construct {
             'aws:elasticbeanstalk:application:environment': {
                 // https://docs.aws.amazon.com/elasticbeanstalk/latest/dg/java-se-nginx.html
                 'PORT': props.application.servicePort.toString(),
+                'INSTANCE_ROLE': props.ebApplication.instanceRole.roleName,
             },
             'aws:elasticbeanstalk:cloudwatch:logs': {
                 'StreamLogs': 'true',
@@ -100,6 +103,16 @@ export class EbEnvironment extends Construct {
                 // https://stackoverflow.com/questions/60532956/get-a-handle-for-the-application-load-balancer-for-an-elastic-beanstalk-environm
                 'aws:elb:listener': {
                     'InstancePort': props.application.servicePort.toString(),
+                },
+            });
+        }
+
+        if (props.certificatesBucket !== undefined) {
+            appendOptions(optionSettings, {
+                'aws:elasticbeanstalk:application:environment': {
+                    'CERT_S3': props.certificatesBucket.bucket.bucketName,
+                    'CERT_PATH': props.certificatesBucket.bucket.bucketRegionalDomainName + '/' +
+                                 props.certificatesBucket.pathForEnvironment(props.name),
                 },
             });
         }

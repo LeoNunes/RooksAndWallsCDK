@@ -3,6 +3,7 @@ import { EbApplication } from './eb_application';
 import { BackendConfig, DnsConfig } from '../../bin/config_def';
 import { EbEnvironment } from './eb_environment';
 import { DnsRecord } from './dns_record';
+import { CertificatesBucket } from './certificates_bucket';
 
 interface ElasticBeanstalkAppProps extends BackendConfig {
     appName: string;
@@ -18,9 +19,19 @@ export class Application extends Construct {
             appName: props.appName,
         });
 
+        let certificatesBucket: CertificatesBucket | undefined = undefined;
+        if (props.environments.find(e => e.application.httpsEnabled && !e.instances.autoscalingEnabled)) {
+            certificatesBucket = new CertificatesBucket(this, `${props.appName}_CertificatesBucket`, {
+                appName: props.appName,
+                environments: props.environments.filter(e => e.application.httpsEnabled).map(e => e.name),
+                ebApplication: ebApp,
+            });
+        }
+
         for (const environment of props.environments) {
             const ebEnv = new EbEnvironment(this, `EbEnvironment_${ebApp.applicationName}_${environment.name}`, {
                 ebApplication: ebApp,
+                certificatesBucket: certificatesBucket,
                 ...environment
             });
 

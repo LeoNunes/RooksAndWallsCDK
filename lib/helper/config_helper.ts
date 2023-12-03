@@ -41,7 +41,7 @@ type KeysToRemoveOptional<T> = keyof {
         T[K] extends (NoDefault<unknown> | undefined) ? never :
         T[K] extends (NullableDefault<unknown> | undefined) ? never :
         K
-    )]: never;
+    )]: T[K];
 };
 
 type RemovePropertiesThatDoesntNeedDefault<T> = {
@@ -74,11 +74,11 @@ type Default<T> =
 
 type EnforceEmptyObjectType<T> = T extends EmptyObject ? EmptyObject : T;
 
-export type ConfigType<ConfigDef extends object> = ExpandDeep<EnforceEmptyObjectType<Immutable<RemoveMarkers<ConfigDef>>>>;
-export type DefaultConfigType<ConfigDef extends object> = ExpandDeep<EnforceEmptyObjectType<Immutable<RemoveMarkers<Default<ConfigDef>>>>>;
-export type FinalConfigType<ConfigDef extends object> = ExpandDeep<EnforceEmptyObjectType<Immutable<RemoveMarkers<RemoveOptional<ConfigDef>>>>>;
+export type ConfigType<ConfigDef extends Record<PropertyKey, unknown>> = ExpandDeep<EnforceEmptyObjectType<Immutable<RemoveMarkers<ConfigDef>>>>;
+export type DefaultConfigType<ConfigDef extends Record<PropertyKey, unknown>> = ExpandDeep<EnforceEmptyObjectType<Immutable<RemoveMarkers<Default<ConfigDef>>>>>;
+export type FinalConfigType<ConfigDef extends Record<PropertyKey, unknown>> = ExpandDeep<EnforceEmptyObjectType<Immutable<RemoveMarkers<RemoveOptional<ConfigDef>>>>>;
 
-export function generateFinalConfig<ConfigDef extends object>(config: ConfigType<ConfigDef>, defaults: DefaultConfigType<ConfigDef>) : FinalConfigType<ConfigDef> {
+export function generateFinalConfig<ConfigDef extends Record<PropertyKey, unknown>>(config: ConfigType<ConfigDef>, defaults: DefaultConfigType<ConfigDef>): FinalConfigType<ConfigDef> {
     return generateFinalConfigRecursive(config, defaults) as FinalConfigType<ConfigDef>;
 }
 

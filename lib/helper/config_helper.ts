@@ -83,7 +83,7 @@ export function generateFinalConfig<ConfigDef extends Record<PropertyKey, unknow
 }
 
 function generateFinalConfigRecursive(config: object, defaults: object): object {
-    const result: Record<string, any> = {};
+    const result: Record<string, unknown> = {};
 
     const keys = new Set<string>(
         Object.keys(config)
@@ -91,8 +91,8 @@ function generateFinalConfigRecursive(config: object, defaults: object): object 
         .map(k => k.replace('_defaults', ''))));
 
     for (const key of keys) {
-        const property = (config as any)[key] || (defaults as any)[key];
-        const defaultsProperty = (defaults as any)[`${key}_defaults`];
+        const property = (config as Record<string, unknown>)[key] || (defaults as Record<string, unknown>)[key];
+        const defaultsProperty = (defaults as Record<string, unknown>)[`${key}_defaults`];
 
         if (Array.isArray(property)) {
             result[key] = property.map(p => {
@@ -117,6 +117,7 @@ function generateFinalConfigRecursive(config: object, defaults: object): object 
  * Hack to make vs code expand/compute types to show in tooltips. It doesn't affect the type in any other way.
  * Based on https://github.com/shian15810/type-expand
  */
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 type Expand<T> =
     T extends object ? (T extends infer O ? { [K in keyof O]: O[K] } : never) : T;
 

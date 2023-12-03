@@ -1,7 +1,8 @@
 export type NonEmptyArray<T> = [T, ...T[]];
 export type ReadonlyNonEmptyArray<T> = readonly [T, ...T[]];
-export type EmptyObject = Record<keyof any, never>;
+export type EmptyObject = Record<PropertyKey, never>;
 
+// eslint-disable-next-line @typescript-eslint/ban-types
 export type Primitives = undefined | null | boolean | string | number | bigint | symbol | Function;
 
 export type Immutable<T> =

@@ -1,5 +1,5 @@
 {
-  "app": "npx ts-node --prefer-ts-exts bin/rooks_and_walls_cdk.ts",
+  "app": "npx ts-node --prefer-ts-exts lib/rooks_and_walls_cdk.ts",
   "watch": {
     "include": [
       "**"

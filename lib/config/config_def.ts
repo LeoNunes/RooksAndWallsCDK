@@ -1,11 +1,11 @@
-import { NonEmptyArray } from '../lib/helper/type_helper';
+import { NonEmptyArray } from '../helper/type_helper';
 import {
     ConfigType,
     DefaultConfigType,
     FinalConfigType,
     NoDefault,
     generateFinalConfig
-} from '../lib/helper/config_helper';
+} from '../helper/config_helper';
 
 type ConfigDef = {
     appName: string;

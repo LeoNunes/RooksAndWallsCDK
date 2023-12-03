@@ -2,7 +2,7 @@
   "name": "rooks_and_walls_cdk",
   "version": "0.1.0",
   "bin": {
-    "rooks_and_walls_cdk": "bin/rooks_and_walls_cdk.js"
+    "rooks_and_walls_cdk": "lib/rooks_and_walls_cdk.js"
   },
   "scripts": {
     "build": "tsc",

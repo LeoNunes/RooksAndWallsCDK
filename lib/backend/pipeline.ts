@@ -5,7 +5,7 @@ import * as codepipeline from 'aws-cdk-lib/aws-codepipeline';
 import * as codepipelineActions from 'aws-cdk-lib/aws-codepipeline-actions';
 import * as codeBuild from 'aws-cdk-lib/aws-codebuild';
 import * as logs from 'aws-cdk-lib/aws-logs';
-import { BackendConfig } from '../../bin/config_def';
+import { BackendConfig } from '../config/config_def';
 import { groupBy } from '../helper/collections';
 
 interface BackendPipelineProps extends BackendConfig {

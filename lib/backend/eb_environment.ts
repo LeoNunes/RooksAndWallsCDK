@@ -4,7 +4,7 @@ import * as elasticbeanstalk from 'aws-cdk-lib/aws-elasticbeanstalk';
 import * as ec2 from 'aws-cdk-lib/aws-ec2';
 import { EbApplication } from "./eb_application";
 import { CertificatesBucket } from "./certificates_bucket";
-import { EnvironmentConfig } from "../../bin/config_def";
+import { EnvironmentConfig } from "../config/config_def";
 
 interface EbEnvironmentProps extends EnvironmentConfig {
     ebApplication: EbApplication;

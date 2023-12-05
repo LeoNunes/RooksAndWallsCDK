@@ -1,15 +1,19 @@
-import { Construct } from "constructs";
+import { Construct } from 'constructs';
 import * as route53 from 'aws-cdk-lib/aws-route53';
-import { DnsConfig } from "../config/config_def";
+import { DnsConfig } from '../config/config_def';
 
 interface DnsRecordProps {
     appName: string;
     environmentName: string;
     subdomain: string;
-    targetType: 'Instance' | 'ApplicationLoadBalancer' | 'ClassicLoadBalancer' | 'NetworkLoadBalancer';
+    targetType:
+        | 'Instance'
+        | 'ApplicationLoadBalancer'
+        | 'ClassicLoadBalancer'
+        | 'NetworkLoadBalancer';
     target: string;
-    dns: DnsConfig,
-    awsRegion: string,
+    dns: DnsConfig;
+    awsRegion: string;
 }
 
 export class DnsRecord extends Construct {
@@ -24,14 +28,14 @@ export class DnsRecord extends Construct {
         let recordTarget: route53.RecordTarget;
         if (props.targetType === 'Instance') {
             recordTarget = route53.RecordTarget.fromIpAddresses(props.target);
-        }
-        else {
+        } else {
             // ElasticBeanstalkEnvironmentEndpointTarget (aws-cdk-lib/aws-route53-targets) doesn't support Tokens.
             // A hardcoded value for the ebEnv.attrEndpointUrl would be needed. Below is the workaround
             // https://github.com/aws/aws-cdk/pull/16305
             // https://github.com/aws/aws-cdk/issues/3206
-    
-            const lbHostedZones = props.targetType === 'NetworkLoadBalancer' ? NLB_HostedZones : ALB_CLB_HostedZones;
+
+            const lbHostedZones =
+                props.targetType === 'NetworkLoadBalancer' ? NLB_HostedZones : ALB_CLB_HostedZones;
             recordTarget = route53.RecordTarget.fromAlias({
                 bind: (): route53.AliasRecordTargetConfig => ({
                     dnsName: props.target,
@@ -39,9 +43,11 @@ export class DnsRecord extends Construct {
                 }),
             });
         }
-            
+
         new route53.ARecord(this, `DNS_ARecord_${props.appName}_${props.environmentName}`, {
-            recordName: props.subdomain + (props.dns?.commonSubdomain ? `.${props.dns.commonSubdomain}` : ''),
+            recordName:
+                props.subdomain +
+                (props.dns?.commonSubdomain ? `.${props.dns.commonSubdomain}` : ''),
             zone: hostedZone,
             target: recordTarget,
         });

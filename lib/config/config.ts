@@ -4,7 +4,8 @@ const appName = 'RooksAndWallsTest';
 const gitHubConfig = {
     owner: 'LeoNunes',
     // Connection must be created manually on the AWS Console
-    connectionARN: 'arn:aws:codestar-connections:sa-east-1:641179121252:connection/4c171f9b-5424-4003-b7e3-ea9f41c7a7ca',
+    connectionARN:
+        'arn:aws:codestar-connections:sa-east-1:641179121252:connection/4c171f9b-5424-4003-b7e3-ea9f41c7a7ca',
 };
 
 export default finalConfig({

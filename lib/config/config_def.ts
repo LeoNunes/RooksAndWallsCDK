@@ -4,7 +4,7 @@ import {
     DefaultConfigType,
     FinalConfigType,
     NoDefault,
-    generateFinalConfig
+    generateFinalConfig,
 } from '../helper/config_helper';
 
 type ConfigDef = {
@@ -12,13 +12,13 @@ type ConfigDef = {
     dns?: NoDefault<DnsConfigDef>;
     cdk: CdkConfigDef;
     backend: BackendConfigDef;
-}
+};
 
 type CdkConfigDef = {
     pipeline: {
         repo: RepoConfigDef;
     };
-}
+};
 
 type BackendConfigDef = {
     pipeline: {
@@ -29,20 +29,20 @@ type BackendConfigDef = {
         region: string;
     };
     environments: NonEmptyArray<EnvironmentConfigDef>;
-}
+};
 
 type DnsConfigDef = {
     hostedZoneId: string;
     hostedZoneName: string;
     commonSubdomain?: NoDefault<string>;
-}
+};
 
 type RepoConfigDef = {
     owner: string;
     name: string;
     branch: string;
     connectionARN: string;
-}
+};
 
 type EnvironmentConfigDef = {
     name: string;
@@ -59,8 +59,8 @@ type EnvironmentConfigDef = {
         instanceTypes?: string;
     };
     application?: {
-        httpsEnabled?: boolean,
-        httpsEnforced?: boolean,
+        httpsEnabled?: boolean;
+        httpsEnforced?: boolean;
         servicePort?: number;
     };
     healthCheck?: {
@@ -68,7 +68,7 @@ type EnvironmentConfigDef = {
         port?: number;
         path?: string;
     };
-}
+};
 
 const defaultConfig: DefaultConfigType<ConfigDef> = {
     backend_defaults: {
@@ -82,7 +82,7 @@ const defaultConfig: DefaultConfigType<ConfigDef> = {
             },
             deployment: {},
             deployment_defaults: {
-                wave: 0
+                wave: 0,
             },
             application: {},
             application_defaults: {

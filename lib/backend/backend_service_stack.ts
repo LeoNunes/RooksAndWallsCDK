@@ -26,7 +26,7 @@ export class BackendServiceStack extends cdk.Stack {
 }
 
 interface BackendServiceStageProps extends cdk.StageProps {
-    stackProps: BackendServiceStackProps
+    stackProps: BackendServiceStackProps;
 }
 
 export class BackendServiceStage extends cdk.Stage {

@@ -69,21 +69,23 @@ export class BackendPipeline extends Construct {
             actions: [buildAction],
         });
 
-        const waves = groupBy(props.environments, (env => env.deployment.wave));
+        const waves = groupBy(props.environments, env => env.deployment.wave);
         const waveNumbers = Object.keys(waves).map(Number).sort();
 
         for (const waveNumber of waveNumbers) {
             const actions: codepipelineActions.ElasticBeanstalkDeployAction[] = [];
 
             for (const environment of waves[waveNumber]) {
-                actions.push(new codepipelineActions.ElasticBeanstalkDeployAction({
-                    actionName: `Deploy-${environment.name}`,
-                    applicationName: props.appName,
-                    environmentName: `${props.appName}-${environment.name}`,
-                    input: buildArtifact,
-                }));
+                actions.push(
+                    new codepipelineActions.ElasticBeanstalkDeployAction({
+                        actionName: `Deploy-${environment.name}`,
+                        applicationName: props.appName,
+                        environmentName: `${props.appName}-${environment.name}`,
+                        input: buildArtifact,
+                    }),
+                );
             }
-            
+
             pipeline.addStage({
                 stageName: `Deploy-Wave${waveNumber}`,
                 actions: actions,

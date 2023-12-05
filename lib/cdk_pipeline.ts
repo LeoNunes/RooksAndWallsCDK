@@ -6,27 +6,31 @@ import * as logs from 'aws-cdk-lib/aws-logs';
 import { BackendServiceStage } from './backend/backend_service_stack';
 import { AppConfig } from './config/config_def';
 
-interface CdkPipelineProps extends cdk.StackProps, AppConfig { }
+interface CdkPipelineProps extends cdk.StackProps, AppConfig {}
 
 // Ref: https://docs.aws.amazon.com/cdk/v2/guide/cdk_pipeline.html
 export class CdkPipeline extends cdk.Stack {
     constructor(scope: Construct, id: string, props: CdkPipelineProps) {
         super(scope, id, props);
-    
+
         const artifactBucket = new s3.Bucket(this, 'ArtifactBucket', {
             removalPolicy: cdk.RemovalPolicy.DESTROY,
             autoDeleteObjects: true,
         });
 
         const cdkRepo = props.cdk.pipeline.repo;
-        
+
         const pipeline = new CodePipeline(this, 'Pipeline', {
             pipelineName: `${props.appName}-CdkPipeline`,
             synth: new ShellStep('Synth', {
-                input: CodePipelineSource.connection(`${cdkRepo.owner}/${cdkRepo.name}`, cdkRepo.branch, {
-                    connectionArn: cdkRepo.connectionARN,
-                }),
-                commands: ['npm ci', 'npm run build', 'npx cdk synth']
+                input: CodePipelineSource.connection(
+                    `${cdkRepo.owner}/${cdkRepo.name}`,
+                    cdkRepo.branch,
+                    {
+                        connectionArn: cdkRepo.connectionARN,
+                    },
+                ),
+                commands: ['npm ci', 'npm run build', 'npx cdk synth'],
             }),
             artifactBucket: artifactBucket,
             synthCodeBuildDefaults: {

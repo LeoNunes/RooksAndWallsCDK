@@ -1,9 +1,9 @@
-import { Construct } from "constructs";
+import { Construct } from 'constructs';
 import * as cdk from 'aws-cdk-lib';
 import * as s3 from 'aws-cdk-lib/aws-s3';
 import * as s3deploy from 'aws-cdk-lib/aws-s3-deployment';
-import * as logs from "aws-cdk-lib/aws-logs";
-import { EbApplication } from "./eb_application";
+import * as logs from 'aws-cdk-lib/aws-logs';
+import { EbApplication } from './eb_application';
 
 interface CertificatesBucketProps {
     appName: string;

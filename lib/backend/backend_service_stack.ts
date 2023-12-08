@@ -2,12 +2,9 @@ import * as cdk from 'aws-cdk-lib';
 import { Construct } from 'constructs';
 import { Application } from './application';
 import { BackendPipeline } from './pipeline';
-import { BackendConfig, DnsConfig } from '../config/config_def';
+import { AppConfig } from '../config/config_def';
 
-interface BackendServiceStackProps extends cdk.StackProps, BackendConfig {
-    appName: string;
-    dns?: DnsConfig;
-}
+interface BackendServiceStackProps extends cdk.StackProps, AppConfig {}
 
 export class BackendServiceStack extends cdk.Stack {
     constructor(scope: Construct, id: string, props: BackendServiceStackProps) {

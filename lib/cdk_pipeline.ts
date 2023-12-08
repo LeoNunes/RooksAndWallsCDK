@@ -72,13 +72,11 @@ export class CdkPipeline extends cdk.Stack {
             stackProps: {
                 stackName: `${props.appName}BackendStack`,
                 description: `Backend Stack for ${props.appName} managed by ${this.stackName}`,
-                appName: props.appName,
-                dns: props.dns,
                 env: {
                     account: props.backend.awsEnvironment.account,
                     region: props.backend.awsEnvironment.region,
                 },
-                ...props.backend,
+                ...props,
             },
         });
 

@@ -8,8 +8,8 @@ const app = new cdk.App();
 new CdkPipeline(app, `${config.appName}CdkPipelineStack`, {
     description: `CDK Pipeline Stack for ${config.appName}`,
     env: {
-        account: config.backend.awsEnvironment.account,
-        region: config.backend.awsEnvironment.region,
+        account: config.awsEnvironment.account,
+        region: config.awsEnvironment.region,
     },
     ...config,
 

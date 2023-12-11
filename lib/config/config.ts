@@ -10,6 +10,10 @@ const gitHubConfig = {
 
 export default finalConfig({
     appName: appName,
+    awsEnvironment: {
+        account: '641179121252',
+        region: 'us-west-2',
+    },
     dns: {
         hostedZoneId: 'Z06232281J47SNE8ZWHNB',
         hostedZoneName: 'leonunes.me',
@@ -31,10 +35,6 @@ export default finalConfig({
                 name: 'RooksAndWallsServer',
                 branch: 'main',
             },
-        },
-        awsEnvironment: {
-            account: '641179121252',
-            region: 'us-west-2',
         },
         environments: [
             {

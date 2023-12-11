@@ -3,8 +3,8 @@ import { Construct } from 'constructs';
 import { CodePipeline, CodePipelineSource, ShellStep } from 'aws-cdk-lib/pipelines';
 import * as s3 from 'aws-cdk-lib/aws-s3';
 import * as logs from 'aws-cdk-lib/aws-logs';
-import { BackendServiceStage } from './backend/old/backend_service_stack';
 import { AppConfig } from './config/config_def';
+import Backend from './backend';
 
 interface CdkPipelineProps extends cdk.StackProps, AppConfig {}
 
@@ -13,31 +13,38 @@ export class CdkPipeline extends cdk.Stack {
     constructor(scope: Construct, id: string, props: CdkPipelineProps) {
         super(scope, id, props);
 
+        const pipeline = this.createBasePipeline(props);
+
+        new Backend(this, `${props.appName}-Backend`, {
+            cdkPipeline: pipeline,
+            ...props,
+        });
+    }
+
+    private createBasePipeline(props: CdkPipelineProps) {
+        const { appName } = props;
+        const { repo } = props.cdk.pipeline;
+
         const artifactBucket = new s3.Bucket(this, 'ArtifactBucket', {
             removalPolicy: cdk.RemovalPolicy.DESTROY,
             autoDeleteObjects: true,
         });
 
-        const cdkRepo = props.cdk.pipeline.repo;
-
-        const pipeline = new CodePipeline(this, 'Pipeline', {
-            pipelineName: `${props.appName}-CdkPipeline`,
+        return new CodePipeline(this, 'Pipeline', {
+            pipelineName: `${appName}-CdkPipeline`,
             synth: new ShellStep('Synth', {
-                input: CodePipelineSource.connection(
-                    `${cdkRepo.owner}/${cdkRepo.name}`,
-                    cdkRepo.branch,
-                    {
-                        connectionArn: cdkRepo.connectionARN,
-                    },
-                ),
+                input: CodePipelineSource.connection(`${repo.owner}/${repo.name}`, repo.branch, {
+                    connectionArn: repo.connectionARN,
+                }),
                 commands: ['npm ci', 'npm run build', 'npx cdk synth'],
             }),
             artifactBucket: artifactBucket,
+            publishAssetsInParallel: false,
             synthCodeBuildDefaults: {
                 logging: {
                     cloudWatch: {
                         logGroup: new logs.LogGroup(this, 'SynthLogGroup', {
-                            logGroupName: `${props.appName}/CDKPipeline/Synth/`,
+                            logGroupName: `${appName}/CDKPipeline/Synth/`,
                             retention: logs.RetentionDays.ONE_WEEK,
                             removalPolicy: cdk.RemovalPolicy.DESTROY,
                         }),
@@ -48,7 +55,7 @@ export class CdkPipeline extends cdk.Stack {
                 logging: {
                     cloudWatch: {
                         logGroup: new logs.LogGroup(this, 'SelfMutationLogGroup', {
-                            logGroupName: `${props.appName}/CDKPipeline/SelfMutation/`,
+                            logGroupName: `${appName}/CDKPipeline/SelfMutation/`,
                             retention: logs.RetentionDays.ONE_WEEK,
                             removalPolicy: cdk.RemovalPolicy.DESTROY,
                         }),
@@ -59,7 +66,7 @@ export class CdkPipeline extends cdk.Stack {
                 logging: {
                     cloudWatch: {
                         logGroup: new logs.LogGroup(this, 'AssetPublishingLogGroup', {
-                            logGroupName: `${props.appName}/CDKPipeline/AssetPublishing/`,
+                            logGroupName: `${appName}/CDKPipeline/AssetPublishing/`,
                             retention: logs.RetentionDays.ONE_WEEK,
                             removalPolicy: cdk.RemovalPolicy.DESTROY,
                         }),
@@ -67,19 +74,5 @@ export class CdkPipeline extends cdk.Stack {
                 },
             },
         });
-
-        const backendStack = new BackendServiceStage(this, 'BackendServiceStage', {
-            stackProps: {
-                stackName: `${props.appName}BackendStack`,
-                description: `Backend Stack for ${props.appName} managed by ${this.stackName}`,
-                env: {
-                    account: props.backend.awsEnvironment.account,
-                    region: props.backend.awsEnvironment.region,
-                },
-                ...props,
-            },
-        });
-
-        pipeline.addStage(backendStack);
     }
 }

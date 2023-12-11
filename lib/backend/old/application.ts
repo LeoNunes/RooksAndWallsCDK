@@ -12,7 +12,7 @@ export class Application extends Construct {
     constructor(scope: Construct, id: string, props: ElasticBeanstalkAppProps) {
         super(scope, id);
 
-        const { appName, backend: backendProps, dns: dnsProps } = props;
+        const { appName, awsEnvironment, backend: backendProps, dns: dnsProps } = props;
 
         const ebApp = new EbApplication(this, `EbApplication_${appName}`, {
             appName: appName,
@@ -59,7 +59,7 @@ export class Application extends Construct {
                             ? 'ClassicLoadBalancer'
                             : 'Instance',
                         target: ebEnv.endpointUrl,
-                        awsRegion: backendProps.awsEnvironment.region,
+                        awsRegion: awsEnvironment.region,
                     },
                 );
 

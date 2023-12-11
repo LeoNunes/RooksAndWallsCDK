@@ -75,7 +75,7 @@ export class EbEnvironment extends Construct {
                 DisableIMDSv1: 'true',
             },
             'aws:ec2:instances': {
-                InstanceTypes: props.instances.instanceTypes,
+                InstanceTypes: props.instances.instanceType,
             },
             // 'aws:ec2:vpc': {
             //     // https://repost.aws/questions/QUARH0e87FTfaBKPm0BFCmrA/do-elastic-beanstalk-web-server-environment-need-a-public-elastic-ip

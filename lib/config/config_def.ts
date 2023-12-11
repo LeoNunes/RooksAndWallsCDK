@@ -9,8 +9,12 @@ import {
 
 type ConfigDef = {
     appName: string;
-    dns?: NoDefault<DnsConfigDef>;
+    awsEnvironment: {
+        account: string;
+        region: string;
+    };
     cdk: CdkConfigDef;
+    dns?: NoDefault<DnsConfigDef>;
     backend: BackendConfigDef;
 };
 
@@ -20,21 +24,17 @@ type CdkConfigDef = {
     };
 };
 
-type BackendConfigDef = {
-    pipeline: {
-        repo: RepoConfigDef;
-    };
-    awsEnvironment: {
-        account: string;
-        region: string;
-    };
-    environments: NonEmptyArray<EnvironmentConfigDef>;
-};
-
 type DnsConfigDef = {
     hostedZoneId: string;
     hostedZoneName: string;
     commonSubdomain?: NoDefault<string>;
+};
+
+type BackendConfigDef = {
+    pipeline: {
+        repo: RepoConfigDef;
+    };
+    environments: NonEmptyArray<EnvironmentConfigDef>;
 };
 
 type RepoConfigDef = {
@@ -52,11 +52,11 @@ type EnvironmentConfigDef = {
         wave?: number;
     };
     instances?: {
-        /** If autoscaling is disabled the environment will be created with the SingleInstance mode and no Load Balancer */
-        autoscalingEnabled?: boolean;
-        minInstances?: number;
-        maxInstances?: number;
-        instanceTypes?: string;
+        // TODO: Implement autoscaling
+        autoscalingEnabled?: false;
+        minInstances?: 1;
+        maxInstances?: 1;
+        instanceType?: string;
     };
     application?: {
         httpsEnabled?: boolean;
@@ -78,7 +78,7 @@ const defaultConfig: DefaultConfigType<ConfigDef> = {
                 autoscalingEnabled: false,
                 minInstances: 1,
                 maxInstances: 1,
-                instanceTypes: 't3.nano,t3.micro',
+                instanceType: 't3.nano',
             },
             deployment: {},
             deployment_defaults: {

@@ -1,6 +1,6 @@
 import { Construct } from 'constructs';
 import * as route53 from 'aws-cdk-lib/aws-route53';
-import { DnsConfig } from '../config/config_def';
+import { DnsConfig } from '../../config/config_def';
 
 interface DnsRecordProps {
     appName: string;

@@ -1,6 +1,6 @@
 import { Construct } from 'constructs';
 import { EbApplication } from './eb_application';
-import { AppConfig } from '../config/config_def';
+import { AppConfig } from '../../config/config_def';
 import { EbEnvironment } from './eb_environment';
 import { DnsRecord } from './dns_record';
 import { CertificatesBucket } from './certificates_bucket';

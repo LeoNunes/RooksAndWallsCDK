@@ -3,6 +3,7 @@ import { AppConfig } from '../config/config_def';
 import { groupBy } from '../helper/collections';
 import { CodePipeline } from 'aws-cdk-lib/pipelines';
 import { EnvironmentStage } from './environment';
+import Pipeline from './pipeline';
 
 export interface BackendProps extends AppConfig {
     cdkPipeline: CodePipeline;
@@ -17,7 +18,9 @@ export default class Backend extends Construct {
     }
 
     private createEnvironmentStages(props: BackendProps) {
-        const waves = groupBy(props.backend.environments, env => env.deployment.wave);
+        const { appName, backend, awsEnvironment } = props;
+
+        const waves = groupBy(backend.environments, env => env.deployment.wave);
         const waveNumbers = Object.keys(waves).map(Number).sort();
 
         for (const waveNumber of waveNumbers) {
@@ -27,16 +30,16 @@ export default class Backend extends Construct {
                 wave.addStage(
                     new EnvironmentStage(
                         this,
-                        `${props.appName}-${environment.name}-BackendEnvironmentStage`,
+                        `${appName}-${environment.name}-BackendEnvironmentStage`,
                         {
-                            appName: props.appName,
+                            appName: appName,
                             environment: environment,
                             stackProps: {
-                                stackName: `${props.appName}${environment.name}BackendEnvironment`,
-                                description: `Backend Stack for the ${props.appName}'s ${environment.name} environment`,
+                                stackName: `${appName}${environment.name}BackendEnvironment`,
+                                description: `Backend Stack for the ${appName}'s ${environment.name} environment`,
                                 env: {
-                                    account: props.awsEnvironment.account,
-                                    region: props.awsEnvironment.region,
+                                    account: awsEnvironment.account,
+                                    region: awsEnvironment.region,
                                 },
                             },
                         },
@@ -46,8 +49,9 @@ export default class Backend extends Construct {
         }
     }
 
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     private createPipeline(props: BackendProps) {
-        // TODOO
+        const { appName, backend } = props;
+
+        new Pipeline(this, `${props.appName}-BackendPipeline`, { appName, backend });
     }
 }

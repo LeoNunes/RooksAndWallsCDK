@@ -14,6 +14,10 @@ export class EnvironmentStack extends cdk.Stack {
     constructor(scope: Construct, id: string, props: EnvironmentStackProps) {
         super(scope, id, props.stackProps);
 
+        this.createInstance(props);
+    }
+
+    private createInstance(props: EnvironmentStackProps) {
         const { appName, environment } = props;
 
         const vpc = ec2.Vpc.fromLookup(this, `${appName}-${environment.name}-VPC`, {
@@ -48,14 +52,26 @@ export class EnvironmentStack extends cdk.Stack {
         role.addManagedPolicy(
             iam.ManagedPolicy.fromAwsManagedPolicyName('AmazonSSMManagedInstanceCore'),
         );
+        role.addManagedPolicy(
+            iam.ManagedPolicy.fromAwsManagedPolicyName(
+                'service-role/AmazonEC2RoleforAWSCodeDeploy',
+            ),
+        );
 
-        new ec2.Instance(this, `${appName}-${environment.name}-Instance`, {
+        const instance = new ec2.Instance(this, `${appName}-${environment.name}-Instance`, {
             vpc: vpc,
             role: role,
             securityGroup: securityGroup,
             instanceType: new ec2.InstanceType(environment.instances.instanceType),
             machineImage: ec2.MachineImage.latestAmazonLinux2(),
         });
+
+        cdk.Tags.of(role).add('application', appName);
+        cdk.Tags.of(role).add('environment', environment.name);
+        cdk.Tags.of(securityGroup).add('application', appName);
+        cdk.Tags.of(securityGroup).add('environment', environment.name);
+        cdk.Tags.of(instance).add('application', appName);
+        cdk.Tags.of(instance).add('environment', environment.name);
     }
 }
 

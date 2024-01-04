@@ -35,7 +35,7 @@ export default class Backend extends Construct {
                             appName: appName,
                             environment: environment,
                             stackProps: {
-                                stackName: `${appName}${environment.name}BackendEnvironment`,
+                                stackName: `${appName}Backend-${environment.name}Environment`,
                                 description: `Backend Stack for the ${appName}'s ${environment.name} environment`,
                                 env: {
                                     account: awsEnvironment.account,

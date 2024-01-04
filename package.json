@@ -16,7 +16,7 @@
     "@types/node": "20.1.7",
     "@typescript-eslint/eslint-plugin": "^6.13.1",
     "@typescript-eslint/parser": "^6.13.1",
-    "aws-cdk": "2.82.0",
+    "aws-cdk": "2.117.0",
     "eslint": "^8.55.0",
     "eslint-config-prettier": "^9.1.0",
     "husky": "^8.0.3",
@@ -28,7 +28,7 @@
     "typescript": "~5.1.6"
   },
   "dependencies": {
-    "aws-cdk-lib": "2.82.0",
+    "aws-cdk-lib": "2.117.0",
     "constructs": "^10.0.0",
     "source-map-support": "^0.5.21"
   },

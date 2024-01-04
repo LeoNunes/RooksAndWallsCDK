@@ -83,6 +83,7 @@ export default class Pipeline extends Construct {
                 const application = new codedeploy.ServerApplication(
                     this,
                     `${appName}-${environment.name}-ServerApplication`,
+                    { applicationName: `${appName}-${environment.name}-ServerApplication` },
                 );
 
                 const deploymentGroup = new codedeploy.ServerDeploymentGroup(
@@ -91,10 +92,14 @@ export default class Pipeline extends Construct {
                     {
                         application: application,
                         deploymentGroupName: `${appName}-${environment.name}-ServerDeploymentGroup`,
-                        ec2InstanceTags: new codedeploy.InstanceTagSet({
-                            application: [appName],
-                            environment: [environment.name],
-                        }),
+                        ec2InstanceTags: new codedeploy.InstanceTagSet(
+                            {
+                                application: [appName],
+                            },
+                            {
+                                environment: [environment.name],
+                            },
+                        ),
                     },
                 );
 
@@ -105,6 +110,9 @@ export default class Pipeline extends Construct {
                         input: buildArtifact,
                     }),
                 );
+
+                cdk.Tags.of(deploymentGroup).add('application', appName);
+                cdk.Tags.of(deploymentGroup).add('environment', environment.name);
             }
 
             pipeline.addStage({

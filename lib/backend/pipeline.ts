@@ -50,7 +50,7 @@ export default class Pipeline extends Construct {
         const buildProject = new codebuild.PipelineProject(this, `${appName}-BuildProject`, {
             projectName: `${appName}_BackendPipelineBuild`,
             description: `Build step for ${appName} Backend Pipeline`,
-            buildSpec: codebuild.BuildSpec.fromSourceFilename('buildspec.yml'),
+            buildSpec: codebuild.BuildSpec.fromSourceFilename('aws/buildspec.yml'),
             logging: {
                 cloudWatch: {
                     logGroup: new logs.LogGroup(this, 'BuildProjectLogGroup', {

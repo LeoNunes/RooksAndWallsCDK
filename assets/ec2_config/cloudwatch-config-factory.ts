@@ -11,26 +11,26 @@ export default function cloudWatchConfigFactory(appName: string, envName: string
                         {
                             file_path:
                                 '/opt/aws/amazon-cloudwatch-agent/logs/amazon-cloudwatch-agent.log',
-                            log_group_name: `${appName}/${envName}/cloudwatch-agent-log`,
+                            log_group_name: `${appName}/BE/${envName}/cloudwatch-agent-log`,
                             log_stream_name: '{instance_id}-agent-log',
                             retention_in_days: 7,
                         },
                         {
                             file_path: '/var/log/aws/codedeploy-agent/codedeploy-agent.log',
-                            log_group_name: `${appName}/${envName}/codedeploy-agent-log`,
+                            log_group_name: `${appName}/BE/${envName}/codedeploy-agent-log`,
                             log_stream_name: '{instance_id}-agent-log',
                             retention_in_days: 7,
                         },
                         {
                             file_path:
                                 '/opt/codedeploy-agent/deployment-root/deployment-logs/codedeploy-agent-deployments.log',
-                            log_group_name: `${appName}/${envName}/codedeploy-agent-deployment-log`,
+                            log_group_name: `${appName}/BE/${envName}/codedeploy-agent-deployment-log`,
                             log_stream_name: '{instance_id}-codedeploy-agent-deployment-log',
                             retention_in_days: 7,
                         },
                         {
                             file_path: '/tmp/codedeploy-agent.update.log',
-                            log_group_name: `${appName}/${envName}/codedeploy-agent-updater-log`,
+                            log_group_name: `${appName}/BE/${envName}/codedeploy-agent-updater-log`,
                             log_stream_name: '{instance_id}-codedeploy-agent-updater-log',
                             retention_in_days: 7,
                         },

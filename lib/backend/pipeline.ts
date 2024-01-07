@@ -21,19 +21,19 @@ export default class Pipeline extends Construct {
         const { appName, backend } = props;
         const { pipeline: pipelineProps, environments } = backend;
 
-        const artifactBucket = new s3.Bucket(this, `${appName}-BackendPipeline-ArtifactBucket`, {
+        const artifactBucket = new s3.Bucket(this, 'ArtifactBucket', {
             removalPolicy: cdk.RemovalPolicy.DESTROY,
             autoDeleteObjects: true,
         });
 
-        const pipeline = new codepipeline.Pipeline(this, `${appName}-BackendPipeline`, {
-            pipelineName: `${appName}-BackendPipeline`,
+        const pipeline = new codepipeline.Pipeline(this, 'Pipeline', {
+            pipelineName: `${appName}-Backend`,
             artifactBucket: artifactBucket,
         });
 
         const sourceOutput = new codepipeline.Artifact('SourceArtifact');
         const sourceAction = new codepipelineActions.CodeStarConnectionsSourceAction({
-            actionName: `${pipelineProps.repo.owner}_${pipelineProps.repo.name}`,
+            actionName: `${pipelineProps.repo.owner}-${pipelineProps.repo.name}`,
             connectionArn: pipelineProps.repo.connectionARN,
             owner: pipelineProps.repo.owner,
             repo: pipelineProps.repo.name,
@@ -47,14 +47,14 @@ export default class Pipeline extends Construct {
         });
 
         const buildArtifact = new codepipeline.Artifact('BuildArtifact');
-        const buildProject = new codebuild.PipelineProject(this, `${appName}-BuildProject`, {
-            projectName: `${appName}_BackendPipelineBuild`,
+        const buildProject = new codebuild.PipelineProject(this, 'BuildProject', {
+            projectName: `${appName}-BE-PipelineBuild`,
             description: `Build step for ${appName} Backend Pipeline`,
             buildSpec: codebuild.BuildSpec.fromSourceFilename('aws/buildspec.yml'),
             logging: {
                 cloudWatch: {
                     logGroup: new logs.LogGroup(this, 'BuildProjectLogGroup', {
-                        logGroupName: `${appName}/BackendPipeline/Build/`,
+                        logGroupName: `${appName}/BE/Pipeline/Build/`,
                         retention: logs.RetentionDays.ONE_WEEK,
                         removalPolicy: cdk.RemovalPolicy.DESTROY,
                     }),
@@ -82,16 +82,16 @@ export default class Pipeline extends Construct {
             for (const environment of waves[waveNumber]) {
                 const application = new codedeploy.ServerApplication(
                     this,
-                    `${appName}-${environment.name}-ServerApplication`,
-                    { applicationName: `${appName}-${environment.name}-ServerApplication` },
+                    `${environment.name}-ServerApplication`,
+                    { applicationName: `${appName}-BE-${environment.name}` },
                 );
 
                 const deploymentGroup = new codedeploy.ServerDeploymentGroup(
                     this,
-                    `${appName}-${environment.name}-ServerDeploymentGroup`,
+                    `${environment.name}-ServerDeploymentGroup`,
                     {
                         application: application,
-                        deploymentGroupName: `${appName}-${environment.name}-ServerDeploymentGroup`,
+                        deploymentGroupName: `${appName}-BE-${environment.name}`,
                         ec2InstanceTags: new codedeploy.InstanceTagSet(
                             {
                                 application: [appName],

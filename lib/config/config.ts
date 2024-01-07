@@ -1,6 +1,6 @@
 import { finalConfig } from './config_def';
 
-const appName = 'RooksAndWallsTest';
+const appName = 'RnWTest';
 const gitHubConfig = {
     owner: 'LeoNunes',
     // Connection must be created manually on the AWS Console

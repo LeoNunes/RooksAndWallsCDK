@@ -6,22 +6,22 @@ import * as logs from 'aws-cdk-lib/aws-logs';
 import { AppConfig } from './config/config_def';
 import Backend from './backend';
 
-interface CdkPipelineProps extends cdk.StackProps, AppConfig {}
+interface CdkStackProps extends cdk.StackProps, AppConfig {}
 
 // Ref: https://docs.aws.amazon.com/cdk/v2/guide/cdk_pipeline.html
-export class CdkPipeline extends cdk.Stack {
-    constructor(scope: Construct, id: string, props: CdkPipelineProps) {
+export class CdkStack extends cdk.Stack {
+    constructor(scope: Construct, id: string, props: CdkStackProps) {
         super(scope, id, props);
 
         const pipeline = this.createBasePipeline(props);
 
-        new Backend(this, `${props.appName}-Backend`, {
+        new Backend(this, 'Backend', {
             cdkPipeline: pipeline,
             ...props,
         });
     }
 
-    private createBasePipeline(props: CdkPipelineProps) {
+    private createBasePipeline(props: CdkStackProps) {
         const { appName } = props;
         const { repo } = props.cdk.pipeline;
 
@@ -30,8 +30,8 @@ export class CdkPipeline extends cdk.Stack {
             autoDeleteObjects: true,
         });
 
-        return new CodePipeline(this, 'Pipeline', {
-            pipelineName: `${appName}-CdkPipeline`,
+        return new CodePipeline(this, 'CdkPipeline', {
+            pipelineName: `${appName}-CDK`,
             synth: new ShellStep('Synth', {
                 input: CodePipelineSource.connection(`${repo.owner}/${repo.name}`, repo.branch, {
                     connectionArn: repo.connectionARN,
@@ -44,7 +44,7 @@ export class CdkPipeline extends cdk.Stack {
                 logging: {
                     cloudWatch: {
                         logGroup: new logs.LogGroup(this, 'SynthLogGroup', {
-                            logGroupName: `${appName}/CDKPipeline/Synth/`,
+                            logGroupName: `${appName}/CDK/Pipeline/Synth/`,
                             retention: logs.RetentionDays.ONE_WEEK,
                             removalPolicy: cdk.RemovalPolicy.DESTROY,
                         }),
@@ -55,7 +55,7 @@ export class CdkPipeline extends cdk.Stack {
                 logging: {
                     cloudWatch: {
                         logGroup: new logs.LogGroup(this, 'SelfMutationLogGroup', {
-                            logGroupName: `${appName}/CDKPipeline/SelfMutation/`,
+                            logGroupName: `${appName}/CDK/Pipeline/SelfMutation/`,
                             retention: logs.RetentionDays.ONE_WEEK,
                             removalPolicy: cdk.RemovalPolicy.DESTROY,
                         }),
@@ -66,7 +66,7 @@ export class CdkPipeline extends cdk.Stack {
                 logging: {
                     cloudWatch: {
                         logGroup: new logs.LogGroup(this, 'AssetPublishingLogGroup', {
-                            logGroupName: `${appName}/CDKPipeline/AssetPublishing/`,
+                            logGroupName: `${appName}/CDK/Pipeline/AssetPublishing/`,
                             retention: logs.RetentionDays.ONE_WEEK,
                             removalPolicy: cdk.RemovalPolicy.DESTROY,
                         }),

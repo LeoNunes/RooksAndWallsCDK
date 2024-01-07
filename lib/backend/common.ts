@@ -17,7 +17,7 @@ export class CommonStack extends cdk.Stack {
     private createPipeline(props: CommonStackProps) {
         const { appName, backend } = props;
 
-        new Pipeline(this, `${props.appName}-BackendPipeline`, { appName, backend });
+        new Pipeline(this, 'Pipeline', { appName, backend });
     }
 }
 
@@ -27,6 +27,6 @@ export class CommonStage extends cdk.Stage {
     constructor(scope: Construct, id: string, props: CommonStageProps) {
         super(scope, id, props);
 
-        new CommonStack(this, `${props.appName}-CommonStack`, props);
+        new CommonStack(this, 'CommonStack', props);
     }
 }

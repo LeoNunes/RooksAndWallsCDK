@@ -28,23 +28,19 @@ export default class Backend extends Construct {
 
             for (const environment of waves[waveNumber]) {
                 wave.addStage(
-                    new EnvironmentStage(
-                        this,
-                        `${appName}-${environment.name}-BackendEnvironmentStage`,
-                        {
-                            stageName: `${environment.name}-Stage`,
-                            appName: appName,
-                            environment: environment,
-                            stackProps: {
-                                stackName: `${appName}Backend-${environment.name}Environment`,
-                                description: `Backend Stack for the ${appName}'s ${environment.name} environment`,
-                                env: {
-                                    account: awsEnvironment.account,
-                                    region: awsEnvironment.region,
-                                },
+                    new EnvironmentStage(this, `${environment.name}-EnvironmentStage`, {
+                        stageName: `Backend-${environment.name}-Stage`,
+                        appName: appName,
+                        environment: environment,
+                        stackProps: {
+                            stackName: `${appName}-BE-${environment.name}`,
+                            description: `Backend Stack for the ${appName}'s ${environment.name} environment`,
+                            env: {
+                                account: awsEnvironment.account,
+                                region: awsEnvironment.region,
                             },
                         },
-                    ),
+                    }),
                 );
             }
         }
@@ -54,10 +50,10 @@ export default class Backend extends Construct {
         const { appName, awsEnvironment } = props;
 
         props.cdkPipeline.addStage(
-            new CommonStage(this, `${appName}-BackendCommonStage`, {
+            new CommonStage(this, 'CommonStage', {
                 stageName: 'Backend-Common-Stage',
                 stackProps: {
-                    stackName: `${appName}-BackendCommon`,
+                    stackName: `${appName}-BE-Common`,
                     description: `Backend Stack for ${appName} with common constructs`,
                     env: {
                         account: awsEnvironment.account,

@@ -1,12 +1,13 @@
 #!/usr/bin/env node
 import 'source-map-support/register';
 import * as cdk from 'aws-cdk-lib';
-import { CdkPipeline } from './cdk_pipeline';
+import { CdkStack } from './cdk_stack';
 import config from './config/config';
 
 const app = new cdk.App();
-new CdkPipeline(app, `${config.appName}CdkPipelineStack`, {
-    description: `CDK Pipeline Stack for ${config.appName}`,
+new CdkStack(app, `${config.appName}-CdkStack`, {
+    stackName: `${config.appName}-CDK`,
+    description: `CDK Stack for ${config.appName}`,
     env: {
         account: config.awsEnvironment.account,
         region: config.awsEnvironment.region,

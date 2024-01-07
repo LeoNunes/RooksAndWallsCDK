@@ -1,9 +1,9 @@
 import { Construct } from 'constructs';
+import { CodePipeline } from 'aws-cdk-lib/pipelines';
 import { AppConfig } from '../config/config_def';
 import { groupBy } from '../helper/collections';
-import { CodePipeline } from 'aws-cdk-lib/pipelines';
 import { EnvironmentStage } from './environment';
-import Pipeline from './pipeline';
+import { CommonStage } from './common';
 
 export interface BackendProps extends AppConfig {
     cdkPipeline: CodePipeline;
@@ -14,7 +14,7 @@ export default class Backend extends Construct {
         super(scope, id);
 
         this.createEnvironmentStages(props);
-        this.createPipeline(props);
+        this.createCommonStage(props);
     }
 
     private createEnvironmentStages(props: BackendProps) {
@@ -32,6 +32,7 @@ export default class Backend extends Construct {
                         this,
                         `${appName}-${environment.name}-BackendEnvironmentStage`,
                         {
+                            stageName: `${environment.name}-Stage`,
                             appName: appName,
                             environment: environment,
                             stackProps: {
@@ -49,9 +50,22 @@ export default class Backend extends Construct {
         }
     }
 
-    private createPipeline(props: BackendProps) {
-        const { appName, backend } = props;
+    createCommonStage(props: BackendProps) {
+        const { appName, awsEnvironment } = props;
 
-        new Pipeline(this, `${props.appName}-BackendPipeline`, { appName, backend });
+        props.cdkPipeline.addStage(
+            new CommonStage(this, `${appName}-BackendCommonStage`, {
+                stageName: 'Backend-Common-Stage',
+                stackProps: {
+                    stackName: `${appName}-BackendCommon`,
+                    description: `Backend Stack for ${appName} with common constructs`,
+                    env: {
+                        account: awsEnvironment.account,
+                        region: awsEnvironment.region,
+                    },
+                },
+                ...props,
+            }),
+        );
     }
 }

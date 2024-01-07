@@ -2,6 +2,7 @@ import { Construct } from 'constructs';
 import * as cdk from 'aws-cdk-lib';
 import * as ec2 from 'aws-cdk-lib/aws-ec2';
 import * as iam from 'aws-cdk-lib/aws-iam';
+import * as logs from 'aws-cdk-lib/aws-logs';
 import { EnvironmentConfig } from '../config/config_def';
 import cloudWatchConfigFactory from '../../assets/ec2_config/cloudwatch-config-factory';
 
@@ -25,6 +26,7 @@ export class EnvironmentStack extends cdk.Stack {
         const securityGroup = this.createSecurityGroup(props, vpc);
         const role = this.createInstanceRole(props);
         const init = this.createCfnInit(props);
+        this.createLogGroups(props);
 
         // https://docs.aws.amazon.com/cdk/api/v1/docs/aws-ec2-readme.html#configuring-instance-metadata-service-imds
         const instance = new ec2.Instance(this, `${appName}-${environment.name}-Instance`, {
@@ -159,6 +161,25 @@ export class EnvironmentStack extends cdk.Stack {
         }
 
         return codeDeployInstallUrl[env?.region as keyof typeof codeDeployInstallUrl];
+    }
+
+    createLogGroups(props: EnvironmentStackProps) {
+        const { appName, environment } = props;
+
+        const logGroups = [
+            `cloudwatch-agent-log`,
+            `codedeploy-agent-log`,
+            `codedeploy-agent-deployment-log`,
+            `codedeploy-agent-updater-log`,
+        ];
+
+        for (const logGroup of logGroups) {
+            new logs.LogGroup(this, `${appName}-${environment.name}-${logGroup}-LogGroup`, {
+                logGroupName: `${appName}/${environment.name}/${logGroup}`,
+                retention: logs.RetentionDays.ONE_WEEK,
+                removalPolicy: cdk.RemovalPolicy.DESTROY,
+            });
+        }
     }
 
     private tag(construct: Construct, appName: string, environmentName: string) {

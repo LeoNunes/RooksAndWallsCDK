@@ -101,8 +101,14 @@ export class EnvironmentStack extends cdk.Stack {
         const cloudWatchRestartHandle = new ec2.InitServiceRestartHandle();
         const codeDeployRestartHandle = new ec2.InitServiceRestartHandle();
         const initData = ec2.CloudFormationInit.fromConfigSets({
-            configSets: { default: ['preInstall', 'cloudWatch', 'codeDeploy'] },
+            configSets: { default: ['envVariables', 'preInstall', 'cloudWatch', 'codeDeploy'] },
             configs: {
+                envVariables: new ec2.InitConfig([
+                    ec2.InitFile.fromString(
+                        '/etc/rooksandwalls/service.env',
+                        this.getServiceEnvironmentVariables(props),
+                    ),
+                ]),
                 preInstall: new ec2.InitConfig([
                     ec2.InitCommand.shellCommand('sudo yum update -y'),
                     ec2.InitPackage.yum('ruby'),
@@ -141,6 +147,16 @@ export class EnvironmentStack extends cdk.Stack {
             },
         });
         return initData;
+    }
+
+    private getServiceEnvironmentVariables(props: EnvironmentStackProps) {
+        const variables: Record<Uppercase<string>, string> = {
+            PORT: props.environment.application.servicePort.toString(),
+        };
+
+        return Object.keys(variables)
+            .map(k => `${k}=${variables[k as Uppercase<string>]}`)
+            .join('\n');
     }
 
     private codeDeployInstallUrl(props: EnvironmentStackProps) {

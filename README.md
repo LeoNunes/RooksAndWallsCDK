@@ -13,6 +13,13 @@ The initial deployment creates the CDK Pipeline that manages the deployment of t
 * `cdk diff`        compare deployed stack with current state
 * `cdk synth`       emits the synthesized CloudFormation template
 
+## Service
+### Environment Variables
+A file is created at `/etc/rooksandwalls/service.env` with the definition for environment variables. It can, for example, be loaded by the service.  
+These are the variables defined in it:
+
+**PORT**: The port the application should be listening to.
+
 ## EC2 Instances
 ### CFN-INIT
 

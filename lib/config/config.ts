@@ -1,4 +1,4 @@
-import { finalConfig } from './config_def';
+import { AppConfig } from "./config_def";
 
 const appName = 'Games';
 const gitHubConfig = {
@@ -8,7 +8,7 @@ const gitHubConfig = {
         'arn:aws:codestar-connections:sa-east-1:641179121252:connection/4c171f9b-5424-4003-b7e3-ea9f41c7a7ca',
 };
 
-export default finalConfig({
+const appConfig: AppConfig = {
     appName: appName,
     awsEnvironment: {
         account: '641179121252',
@@ -41,13 +41,23 @@ export default finalConfig({
                 name: 'Beta',
                 description: `Beta environment for ${appName}`,
                 subdomain: 'beta',
+                deployment: {
+                    wave: 0,
+                },
                 application: {
                     servicePort: 8080,
                 },
+                instances: {
+                    instanceType: 't3.micro',
+                },
                 healthCheck: {
                     path: '/ping',
+                    protocol: 'HTTPS',
+                    port: 80,
                 },
             },
         ],
     },
-});
+};
+
+export default appConfig;

@@ -42,7 +42,6 @@ export default finalConfig({
                 description: `Beta environment for ${appName}`,
                 subdomain: 'beta',
                 application: {
-                    httpsEnabled: true,
                     servicePort: 8080,
                 },
                 healthCheck: {

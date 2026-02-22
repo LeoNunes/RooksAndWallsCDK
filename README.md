@@ -17,17 +17,13 @@ The initial deployment creates the CDK Pipeline that manages the deployment of t
 ### Environment Variables
 The infrastructure creates `/etc/games/infra.env` with infrastructure-owned variables used by deployment scripts and Nginx templating. These are the variables defined in it:
 
-**PORT**: The port the application should be listening to.
+**GAMES_PORT**: The port the application should be listening to.
 
 **GAMES_ENVIRONMENT**: Environment identifier in lowercase (for example `beta`).
 
 **GAMES_SECRET_NAME**: Secrets Manager secret name used by deployment scripts.
 
 **GAMES_SERVER_NAME**: Fully-qualified host for the environment (for example `beta.api.games.leonunes.me`) used to render Nginx `server_name` and Certbot domain.
-
-**GAMES_SUBDOMAIN**: Environment subdomain segment (for example `beta`).
-
-**GAMES_COMMON_SUBDOMAIN**: Shared application subdomain segment (for example `api.games`).
 
 **GAMES_HOSTED_ZONE_NAME**: DNS zone name (for example `leonunes.me`).
 

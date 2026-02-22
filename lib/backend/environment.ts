@@ -12,7 +12,7 @@ interface EnvironmentStackProps {
     stackProps: cdk.StackProps;
     appName: string;
     environment: EnvironmentConfig;
-    dns?: DnsConfig;
+    dns: DnsConfig;
 }
 
 /** Constructs for the backend infrastructure for a given environment. */
@@ -81,10 +81,6 @@ export class EnvironmentStack extends cdk.Stack {
             instanceId: instance.instanceId,
         });
 
-        if (dns === undefined || environment.subdomain === undefined) {
-            return;
-        }
-
         const hostedZone = route53.HostedZone.fromHostedZoneAttributes(this, 'HostedZone', {
             zoneName: dns.hostedZoneName,
             hostedZoneId: dns.hostedZoneId,
@@ -115,21 +111,9 @@ export class EnvironmentStack extends cdk.Stack {
             allowAllOutbound: true,
         });
 
-        if (environment.application.httpsEnabled) {
-            // Keep only web-facing ports public when TLS is terminated on-instance.
-            securityGroup.addIngressRule(ec2.Peer.anyIpv4(), ec2.Port.tcp(80), 'Allow HTTP access');
-            securityGroup.addIngressRule(
-                ec2.Peer.anyIpv4(),
-                ec2.Port.tcp(443),
-                'Allow HTTPS access',
-            );
-        } else {
-            securityGroup.addIngressRule(
-                ec2.Peer.anyIpv4(),
-                ec2.Port.tcp(environment.application.servicePort),
-                'Allow application port access',
-            );
-        }
+        securityGroup.addIngressRule(ec2.Peer.anyIpv4(), ec2.Port.tcp(80), 'Allow HTTP access');
+        securityGroup.addIngressRule(ec2.Peer.anyIpv4(), ec2.Port.tcp(443), 'Allow HTTPS access');
+        
         return securityGroup;
     }
 
@@ -192,7 +176,7 @@ export class EnvironmentStack extends cdk.Stack {
                 codeDeploy: new ec2.InitConfig([
                     ec2.InitFile.fromUrl(
                         '/tmp/amazon-codedeploy-install',
-                        this.codeDeployInstallUrl(props),
+                        this.codeDeployInstallUrl(),
                     ),
                     ec2.InitCommand.shellCommand('chmod +x /tmp/amazon-codedeploy-install'),
                     ec2.InitCommand.shellCommand('/tmp/amazon-codedeploy-install auto', {
@@ -210,23 +194,12 @@ export class EnvironmentStack extends cdk.Stack {
 
     private getServiceEnvironmentVariables(props: EnvironmentStackProps) {
         const variables: Record<Uppercase<string>, string> = {
-            PORT: props.environment.application.servicePort.toString(),
+            GAMES_PORT: props.environment.application.servicePort.toString(),
             GAMES_ENVIRONMENT: props.environment.name.toLowerCase(),
             GAMES_SECRET_NAME: `games/${props.environment.name.toLowerCase()}/secrets`,
+            GAMES_HOSTED_ZONE_NAME: props.dns.hostedZoneName,   
+            GAMES_SERVER_NAME: this.serverName(props),
         };
-        const serverName = this.serverName(props);
-        if (serverName !== undefined) {
-            variables.GAMES_SERVER_NAME = serverName;
-        }
-        if (props.environment.subdomain !== undefined) {
-            variables.GAMES_SUBDOMAIN = props.environment.subdomain;
-        }
-        if (props.dns?.commonSubdomain !== undefined) {
-            variables.GAMES_COMMON_SUBDOMAIN = props.dns.commonSubdomain;
-        }
-        if (props.dns?.hostedZoneName !== undefined) {
-            variables.GAMES_HOSTED_ZONE_NAME = props.dns.hostedZoneName;
-        }
 
         return Object.keys(variables)
             .map(k => `${k}=${variables[k as Uppercase<string>]}`)
@@ -235,9 +208,6 @@ export class EnvironmentStack extends cdk.Stack {
 
     private serverName(props: EnvironmentStackProps) {
         const { environment, dns } = props;
-        if (environment.subdomain === undefined || dns?.hostedZoneName === undefined) {
-            return undefined;
-        }
 
         return [
             environment.subdomain,
@@ -248,18 +218,17 @@ export class EnvironmentStack extends cdk.Stack {
             .join('.');
     }
 
-    private codeDeployInstallUrl(props: EnvironmentStackProps) {
-        // TODO: Consider using Mappings to support unknown region at synth time.
-        // https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/mappings-section-structure.html
-        const {
-            stackProps: { env },
-        } = props;
-
-        if (env?.region === undefined || !Object.keys(codeDeployInstallUrl).includes(env.region)) {
-            return codeDeployInstallUrl['us-west-2'];
-        }
-
-        return codeDeployInstallUrl[env?.region as keyof typeof codeDeployInstallUrl];
+    private codeDeployInstallUrl(): string {
+        const mapping = new cdk.CfnMapping(this, 'CodeDeployInstallUrls', {
+            mapping: Object.fromEntries(
+                Object.entries(codeDeployInstallUrlByRegion).map(([region, url]) => [
+                    region,
+                    { url },
+                ]),
+            ),
+            lazy: true,
+        });
+        return mapping.findInMap(cdk.Aws.REGION, 'url');
     }
 
     createLogGroups(props: EnvironmentStackProps) {
@@ -298,7 +267,7 @@ export class EnvironmentStage extends cdk.Stage {
     }
 }
 
-const codeDeployInstallUrl = {
+const codeDeployInstallUrlByRegion = {
     'us-east-1': `https://aws-codedeploy-us-east-1.s3.us-east-1.amazonaws.com/latest/install`,
     'us-east-2': `https://aws-codedeploy-us-east-2.s3.us-east-2.amazonaws.com/latest/install`,
     'us-west-1': `https://aws-codedeploy-us-west-1.s3.us-west-1.amazonaws.com/latest/install`,

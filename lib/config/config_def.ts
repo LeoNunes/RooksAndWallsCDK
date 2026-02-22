@@ -14,7 +14,7 @@ type ConfigDef = {
         region: string;
     };
     cdk: CdkConfigDef;
-    dns?: NoDefault<DnsConfigDef>;
+    dns: DnsConfigDef;
     backend: BackendConfigDef;
 };
 
@@ -47,20 +47,14 @@ type RepoConfigDef = {
 type EnvironmentConfigDef = {
     name: string;
     description?: NoDefault<string>;
-    subdomain?: NoDefault<string>;
+    subdomain: string;
     deployment?: {
         wave?: number;
     };
     instances?: {
-        // TODO: Implement autoscaling
-        autoscalingEnabled?: false;
-        minInstances?: 1;
-        maxInstances?: 1;
         instanceType?: string;
     };
     application?: {
-        httpsEnabled?: boolean;
-        httpsEnforced?: boolean;
         servicePort?: number;
     };
     healthCheck?: {
@@ -75,9 +69,6 @@ const defaultConfig: DefaultConfigType<ConfigDef> = {
         environments_defaults: {
             instances: {},
             instances_defaults: {
-                autoscalingEnabled: false,
-                minInstances: 1,
-                maxInstances: 1,
                 instanceType: 't3.nano',
             },
             deployment: {},
@@ -86,8 +77,6 @@ const defaultConfig: DefaultConfigType<ConfigDef> = {
             },
             application: {},
             application_defaults: {
-                httpsEnabled: false,
-                httpsEnforced: false,
                 servicePort: 5000,
             },
             healthCheck: {},

@@ -2,10 +2,8 @@ export type NonEmptyArray<T> = [T, ...T[]];
 export type ReadonlyNonEmptyArray<T> = readonly [T, ...T[]];
 export type EmptyObject = Record<PropertyKey, never>;
 
-// eslint-disable-next-line @typescript-eslint/ban-types
 export type Primitives = undefined | null | boolean | string | number | bigint | symbol | Function;
 
-// prettier-ignore
 export type Immutable<T> =
     T extends Primitives ? T :
     T extends NonEmptyArray<infer A> ? ImmutableNonEmptyArray<A> :
@@ -20,7 +18,6 @@ export type ImmutableMap<K, V> = ReadonlyMap<Immutable<K>, Immutable<V>>;
 export type ImmutableSet<T> = ReadonlySet<Immutable<T>>;
 export type ImmutableObject<T> = { readonly [K in keyof T]: Immutable<T[K]> };
 
-// prettier-ignore
 export type DeepRequired<T> = 
     T extends Array<infer U> ? DeepRequiredArray<U> :
     T extends Map<infer K, infer V> ? DeepRequiredMap<K, V> :

@@ -20,7 +20,7 @@ export default finalConfig({
         commonSubdomain: 'api.games',
     },
     cdk: {
-        pipeline: {
+        infrastructurePipeline: {
             repo: {
                 ...gitHubConfig,
                 name: 'RooksAndWallsCDK',
@@ -29,7 +29,7 @@ export default finalConfig({
         },
     },
     backend: {
-        pipeline: {
+        applicationPipeline: {
             repo: {
                 ...gitHubConfig,
                 name: 'RooksAndWallsServer',

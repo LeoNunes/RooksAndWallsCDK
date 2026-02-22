@@ -19,7 +19,7 @@ type ConfigDef = {
 };
 
 type CdkConfigDef = {
-    pipeline: {
+    infrastructurePipeline: {
         repo: RepoConfigDef;
     };
 };
@@ -31,7 +31,7 @@ type DnsConfigDef = {
 };
 
 type BackendConfigDef = {
-    pipeline: {
+    applicationPipeline: {
         repo: RepoConfigDef;
     };
     environments: NonEmptyArray<EnvironmentConfigDef>;

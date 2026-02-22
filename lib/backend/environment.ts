@@ -15,6 +15,7 @@ interface EnvironmentStackProps {
     dns?: DnsConfig;
 }
 
+/** Constructs for the backend infrastructure for a given environment. */
 export class EnvironmentStack extends cdk.Stack {
     constructor(scope: Construct, id: string, props: EnvironmentStackProps) {
         super(scope, id, props.stackProps);
@@ -288,6 +289,7 @@ export class EnvironmentStack extends cdk.Stack {
 
 interface EnvironmentStageProps extends cdk.StageProps, EnvironmentStackProps {}
 
+/** Stage in infrastructure pipeline responsible for building the backend infrastructure for a given environment. */
 export class EnvironmentStage extends cdk.Stage {
     constructor(scope: Construct, id: string, props: EnvironmentStageProps) {
         super(scope, id, props);

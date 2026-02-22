@@ -13,17 +13,17 @@ export class CdkStack extends cdk.Stack {
     constructor(scope: Construct, id: string, props: CdkStackProps) {
         super(scope, id, props);
 
-        const pipeline = this.createBasePipeline(props);
+        const infraPipeline = this.createInfraPipeline(props);
 
         new Backend(this, 'Backend', {
-            cdkPipeline: pipeline,
+            infraPipeline: infraPipeline,
             ...props,
         });
     }
 
-    private createBasePipeline(props: CdkStackProps) {
+    private createInfraPipeline(props: CdkStackProps) {
         const { appName } = props;
-        const { repo } = props.cdk.pipeline;
+        const { repo } = props.cdk.infrastructurePipeline;
 
         const artifactBucket = new s3.Bucket(this, 'ArtifactBucket', {
             removalPolicy: cdk.RemovalPolicy.DESTROY,

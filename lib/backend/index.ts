@@ -6,7 +6,7 @@ import { EnvironmentStage } from './environment';
 import { CommonStage } from './common';
 
 export interface BackendProps extends AppConfig {
-    cdkPipeline: CodePipeline;
+    infraPipeline: CodePipeline;
 }
 
 export default class Backend extends Construct {
@@ -24,7 +24,7 @@ export default class Backend extends Construct {
         const waveNumbers = Object.keys(waves).map(Number).sort();
 
         for (const waveNumber of waveNumbers) {
-            const wave = props.cdkPipeline.addWave(`Backend-Wave-${waveNumber}`);
+            const wave = props.infraPipeline.addWave(`Backend-Wave-${waveNumber}`);
 
             for (const environment of waves[waveNumber]) {
                 wave.addStage(
@@ -50,7 +50,7 @@ export default class Backend extends Construct {
     createCommonStage(props: BackendProps) {
         const { appName, awsEnvironment } = props;
 
-        props.cdkPipeline.addStage(
+        props.infraPipeline.addStage(
             new CommonStage(this, 'CommonStage', {
                 stageName: 'Backend-Common-Stage',
                 stackProps: {

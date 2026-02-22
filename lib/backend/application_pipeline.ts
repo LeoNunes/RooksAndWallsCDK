@@ -9,17 +9,20 @@ import * as logs from 'aws-cdk-lib/aws-logs';
 import { BackendConfig } from '../config/config_def';
 import { groupBy } from '../helper/collections';
 
-interface PipelineProps {
+interface ApplicationPipelineProps {
     appName: string;
     backend: BackendConfig;
 }
 
-export default class Pipeline extends Construct {
-    constructor(scope: Construct, id: string, props: PipelineProps) {
+/**
+ * This Pipeline that is responsible for deploying code changes in the backend repositories to the environments.
+ */
+export default class ApplicationPipeline extends Construct {
+    constructor(scope: Construct, id: string, props: ApplicationPipelineProps) {
         super(scope, id);
 
         const { appName, backend } = props;
-        const { pipeline: pipelineProps, environments } = backend;
+        const { applicationPipeline: pipelineProps, environments } = backend;
 
         const artifactBucket = new s3.Bucket(this, 'ArtifactBucket', {
             removalPolicy: cdk.RemovalPolicy.DESTROY,

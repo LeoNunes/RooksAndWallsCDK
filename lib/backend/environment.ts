@@ -64,7 +64,7 @@ export class EnvironmentStack extends cdk.Stack {
                 CHANGE: cdk.SecretValue.unsafePlainText('ME'),
             },
         });
-        secret.applyRemovalPolicy(cdk.RemovalPolicy.RETAIN);
+        secret.applyRemovalPolicy(cdk.RemovalPolicy.DESTROY);
         secret.grantRead(role);
 
         return secret;

@@ -44,6 +44,7 @@ export class EnvironmentStack extends cdk.Stack {
             initOptions: {
                 configSets: ['default'],
             },
+            requireImdsv2: true,
         });
 
         this.createElasticIpAndDns(props, instance);

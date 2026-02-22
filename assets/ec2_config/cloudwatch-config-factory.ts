@@ -2,7 +2,7 @@ export default function cloudWatchConfigFactory(appName: string, envName: string
     return {
         agent: {
             metrics_collection_interval: 30,
-            run_as_user: 'root',
+            run_as_user: 'cwagent',
         },
         logs: {
             logs_collected: {
@@ -12,7 +12,7 @@ export default function cloudWatchConfigFactory(appName: string, envName: string
                             file_path:
                                 '/opt/aws/amazon-cloudwatch-agent/logs/amazon-cloudwatch-agent.log',
                             log_group_name: `${appName}/BE/${envName}/cloudwatch-agent-log`,
-                            log_stream_name: '{instance_id}-agent-log',
+                            log_stream_name: '{instance_id}-cloudwatch-agent-log',
                             retention_in_days: 7,
                         },
                         {
@@ -39,7 +39,7 @@ export default function cloudWatchConfigFactory(appName: string, envName: string
             },
         },
         metrics: {
-            aggregation_dimensions: [['InstanceId']],
+            aggregation_dimensions: [['InstanceId'], ['AutoScalingGroupName']],
             append_dimensions: {
                 AutoScalingGroupName: '${aws:AutoScalingGroupName}',
                 ImageId: '${aws:ImageId}',
@@ -47,6 +47,11 @@ export default function cloudWatchConfigFactory(appName: string, envName: string
                 InstanceType: '${aws:InstanceType}',
             },
             metrics_collected: {
+                cpu: {
+                    measurement: ['cpu_usage_idle', 'cpu_usage_iowait', 'cpu_usage_steal', 'cpu_usage_user', 'cpu_usage_system'],
+                    metrics_collection_interval: 30,
+                    totalcpu: true,
+                },
                 disk: {
                     measurement: ['used_percent'],
                     metrics_collection_interval: 30,

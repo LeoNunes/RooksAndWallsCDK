@@ -1,5 +1,8 @@
 {
+  "include": ["lib/**/*", "assets/**/*"],
   "compilerOptions": {
+    "outDir": "dist",
+    "rootDir": ".",
     "target": "ES2022",
     "module": "NodeNext",
     "moduleResolution": "NodeNext",

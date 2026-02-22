@@ -80,6 +80,10 @@ export default class Pipeline extends Construct {
             const actions: codepipelineActions.Action[] = [];
 
             for (const environment of waves[waveNumber]) {
+                const deploymentTargetTags = new codedeploy.InstanceTagSet(
+                    { application: [appName] },
+                    { environment: [environment.name] },
+                );
                 const application = new codedeploy.ServerApplication(
                     this,
                     `${environment.name}-ServerApplication`,
@@ -92,14 +96,7 @@ export default class Pipeline extends Construct {
                     {
                         application: application,
                         deploymentGroupName: `${appName}-BE-${environment.name}`,
-                        ec2InstanceTags: new codedeploy.InstanceTagSet(
-                            {
-                                application: [appName],
-                            },
-                            {
-                                environment: [environment.name],
-                            },
-                        ),
+                        ec2InstanceTags: deploymentTargetTags,
                     },
                 );
 

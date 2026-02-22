@@ -1,6 +1,6 @@
 import { finalConfig } from './config_def';
 
-const appName = 'RnWTest';
+const appName = 'Games';
 const gitHubConfig = {
     owner: 'LeoNunes',
     // Connection must be created manually on the AWS Console
@@ -17,7 +17,7 @@ export default finalConfig({
     dns: {
         hostedZoneId: 'Z06232281J47SNE8ZWHNB',
         hostedZoneName: 'leonunes.me',
-        commonSubdomain: 'rw',
+        commonSubdomain: 'api.games',
     },
     cdk: {
         pipeline: {
@@ -40,7 +40,7 @@ export default finalConfig({
             {
                 name: 'Beta',
                 description: `Beta environment for ${appName}`,
-                subdomain: 'beta.api',
+                subdomain: 'beta',
                 application: {
                     httpsEnabled: true,
                     servicePort: 8080,

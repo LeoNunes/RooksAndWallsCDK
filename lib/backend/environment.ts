@@ -3,13 +3,16 @@ import * as cdk from 'aws-cdk-lib';
 import * as ec2 from 'aws-cdk-lib/aws-ec2';
 import * as iam from 'aws-cdk-lib/aws-iam';
 import * as logs from 'aws-cdk-lib/aws-logs';
-import { EnvironmentConfig } from '../config/config_def';
+import * as route53 from 'aws-cdk-lib/aws-route53';
+import * as secretsmanager from 'aws-cdk-lib/aws-secretsmanager';
+import { DnsConfig, EnvironmentConfig } from '../config/config_def';
 import cloudWatchConfigFactory from '../../assets/ec2_config/cloudwatch-config-factory';
 
 interface EnvironmentStackProps {
     stackProps: cdk.StackProps;
     appName: string;
     environment: EnvironmentConfig;
+    dns?: DnsConfig;
 }
 
 export class EnvironmentStack extends cdk.Stack {
@@ -25,6 +28,7 @@ export class EnvironmentStack extends cdk.Stack {
         const vpc = this.createVPC();
         const securityGroup = this.createSecurityGroup(props, vpc);
         const role = this.createInstanceRole(props);
+        const secret = this.createEnvironmentSecret(props, role);
         const init = this.createCfnInit(props);
         this.createLogGroups(props);
 
@@ -41,9 +45,57 @@ export class EnvironmentStack extends cdk.Stack {
             },
         });
 
+        this.createElasticIpAndDns(props, instance);
+
+        this.tag(secret, appName, environment.name);
         this.tag(role, appName, environment.name);
         this.tag(securityGroup, appName, environment.name);
         this.tag(instance, appName, environment.name);
+    }
+
+    private createEnvironmentSecret(props: EnvironmentStackProps, role: iam.IRole) {
+        const { appName, environment } = props;
+
+        const secret = new secretsmanager.Secret(this, 'EnvironmentSecrets', {
+            secretName: `games/${environment.name.toLowerCase()}/secrets`,
+            description: `Secrets for ${appName} backend ${environment.name} environment`,
+            secretObjectValue: {
+                CHANGE: cdk.SecretValue.unsafePlainText('ME'),
+            },
+        });
+        secret.applyRemovalPolicy(cdk.RemovalPolicy.RETAIN);
+        secret.grantRead(role);
+
+        return secret;
+    }
+
+    private createElasticIpAndDns(props: EnvironmentStackProps, instance: ec2.Instance) {
+        const { appName, environment, dns } = props;
+
+        const eip = new ec2.CfnEIP(this, 'InstanceElasticIp', {
+            domain: 'vpc',
+        });
+        new ec2.CfnEIPAssociation(this, 'InstanceElasticIpAssociation', {
+            allocationId: eip.attrAllocationId,
+            instanceId: instance.instanceId,
+        });
+
+        if (dns === undefined || environment.subdomain === undefined) {
+            return;
+        }
+
+        const hostedZone = route53.HostedZone.fromHostedZoneAttributes(this, 'HostedZone', {
+            zoneName: dns.hostedZoneName,
+            hostedZoneId: dns.hostedZoneId,
+        });
+
+        const recordName =
+            environment.subdomain + (dns.commonSubdomain ? `.${dns.commonSubdomain}` : '');
+        new route53.ARecord(this, `DNS_ARecord_${appName}_${environment.name}`, {
+            recordName: recordName,
+            zone: hostedZone,
+            target: route53.RecordTarget.fromIpAddresses(eip.ref),
+        });
     }
 
     private createVPC() {
@@ -62,13 +114,19 @@ export class EnvironmentStack extends cdk.Stack {
             allowAllOutbound: true,
         });
 
-        securityGroup.addIngressRule(ec2.Peer.anyIpv4(), ec2.Port.tcp(22), 'Allow SSH access');
-        securityGroup.addIngressRule(ec2.Peer.anyIpv4(), ec2.Port.tcp(80), 'Allow HTTP access');
         if (environment.application.httpsEnabled) {
+            // Keep only web-facing ports public when TLS is terminated on-instance.
+            securityGroup.addIngressRule(ec2.Peer.anyIpv4(), ec2.Port.tcp(80), 'Allow HTTP access');
             securityGroup.addIngressRule(
                 ec2.Peer.anyIpv4(),
                 ec2.Port.tcp(443),
                 'Allow HTTPS access',
+            );
+        } else {
+            securityGroup.addIngressRule(
+                ec2.Peer.anyIpv4(),
+                ec2.Port.tcp(environment.application.servicePort),
+                'Allow application port access',
             );
         }
         return securityGroup;
@@ -105,7 +163,7 @@ export class EnvironmentStack extends cdk.Stack {
             configs: {
                 envVariables: new ec2.InitConfig([
                     ec2.InitFile.fromString(
-                        '/etc/rooksandwalls/service.env',
+                        '/etc/games/infra.env',
                         this.getServiceEnvironmentVariables(props),
                     ),
                 ]),
@@ -152,11 +210,41 @@ export class EnvironmentStack extends cdk.Stack {
     private getServiceEnvironmentVariables(props: EnvironmentStackProps) {
         const variables: Record<Uppercase<string>, string> = {
             PORT: props.environment.application.servicePort.toString(),
+            GAMES_ENVIRONMENT: props.environment.name.toLowerCase(),
+            GAMES_SECRET_NAME: `games/${props.environment.name.toLowerCase()}/secrets`,
         };
+        const serverName = this.serverName(props);
+        if (serverName !== undefined) {
+            variables.GAMES_SERVER_NAME = serverName;
+        }
+        if (props.environment.subdomain !== undefined) {
+            variables.GAMES_SUBDOMAIN = props.environment.subdomain;
+        }
+        if (props.dns?.commonSubdomain !== undefined) {
+            variables.GAMES_COMMON_SUBDOMAIN = props.dns.commonSubdomain;
+        }
+        if (props.dns?.hostedZoneName !== undefined) {
+            variables.GAMES_HOSTED_ZONE_NAME = props.dns.hostedZoneName;
+        }
 
         return Object.keys(variables)
             .map(k => `${k}=${variables[k as Uppercase<string>]}`)
             .join('\n');
+    }
+
+    private serverName(props: EnvironmentStackProps) {
+        const { environment, dns } = props;
+        if (environment.subdomain === undefined || dns?.hostedZoneName === undefined) {
+            return undefined;
+        }
+
+        return [
+            environment.subdomain,
+            dns.commonSubdomain,
+            dns.hostedZoneName,
+        ]
+            .filter((value): value is string => value !== undefined && value.length > 0)
+            .join('.');
     }
 
     private codeDeployInstallUrl(props: EnvironmentStackProps) {

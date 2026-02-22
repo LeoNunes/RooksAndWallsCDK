@@ -34,6 +34,18 @@ export default function cloudWatchConfigFactory(appName: string, envName: string
                             log_stream_name: '{instance_id}-codedeploy-agent-updater-log',
                             retention_in_days: 7,
                         },
+                        {
+                            file_path: '/var/log/nginx/access.log',
+                            log_group_name: `${appName}/BE/${envName}/nginx-access-log`,
+                            log_stream_name: '{instance_id}-nginx-access-log',
+                            retention_in_days: 7,
+                        },
+                        {
+                            file_path: '/var/log/nginx/error.log',
+                            log_group_name: `${appName}/BE/${envName}/nginx-error-log`,
+                            log_stream_name: '{instance_id}-nginx-error-log',
+                            retention_in_days: 7,
+                        },
                     ],
                 },
             },

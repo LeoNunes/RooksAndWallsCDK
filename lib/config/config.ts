@@ -28,6 +28,25 @@ const appConfig: AppConfig = {
             },
         },
     },
+    web: {
+        webPipeline: {
+            repo: {
+                ...gitHubConfig,
+                name: 'RooksAndWallsWeb',
+                branch: 'main',
+            },
+        },
+        environments: [
+            {
+                name: 'Beta',
+                subdomain: 'beta.games',
+                backendSubdomain: 'beta.api.games',
+                deployment: {
+                    wave: 0,
+                },
+            },
+        ],
+    },
     backend: {
         applicationPipeline: {
             repo: {

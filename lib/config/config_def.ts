@@ -9,6 +9,7 @@ export type AppConfig = {
     cdk: CdkConfig;
     dns: DnsConfig;
     backend: BackendConfig;
+    web: WebConfig;
 };
 
 export type CdkConfig = {
@@ -35,6 +36,22 @@ export type RepoConfig = {
     name: string;
     branch: string;
     connectionARN: string;
+};
+
+export type WebConfig = {
+    webPipeline: {
+        repo: RepoConfig;
+    };
+    environments: NonEmptyArray<WebEnvironmentConfig>;
+};
+
+export type WebEnvironmentConfig = {
+    name: string;
+    subdomain: string;
+    backendSubdomain: string;
+    deployment: {
+        wave: number;
+    };
 };
 
 export type EnvironmentConfig = {

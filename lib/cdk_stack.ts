@@ -5,6 +5,7 @@ import * as s3 from 'aws-cdk-lib/aws-s3';
 import * as logs from 'aws-cdk-lib/aws-logs';
 import { AppConfig } from './config/config_def';
 import Backend from './backend';
+import Web from './web';
 
 interface CdkStackProps extends cdk.StackProps, AppConfig {}
 
@@ -16,6 +17,11 @@ export class CdkStack extends cdk.Stack {
         const infraPipeline = this.createInfraPipeline(props);
 
         new Backend(this, 'Backend', {
+            infraPipeline: infraPipeline,
+            ...props,
+        });
+
+        new Web(this, 'Web', {
             infraPipeline: infraPipeline,
             ...props,
         });

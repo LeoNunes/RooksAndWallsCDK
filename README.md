@@ -13,6 +13,41 @@ The initial deployment creates the CDK Pipeline that manages the deployment of t
 * `cdk diff`        compare deployed stack with current state
 * `cdk synth`       emits the synthesized CloudFormation template
 
+## Web
+### Infrastructure
+
+Each web environment is deployed to `us-east-1` (required by CloudFront for ACM certificates). The stack creates:
+
+- **S3 bucket** — private, stores the built static assets. Named `${appName}-web-${envName}` (lowercased, e.g. `games-web-beta`).
+- **ACM certificate** — DNS-validated certificate for the environment's domain (e.g. `beta.games.leonunes.me`).
+- **CloudFront distribution** — serves the S3 assets globally over HTTPS with Origin Access Control. Custom domain and certificate are attached.
+- **Route53 A record** — alias record pointing the environment's subdomain to the CloudFront distribution.
+- **SSM parameter** — stores the CloudFront distribution ID at `/${appName}/WEB/${envName}/DistributionId` so the `WebPipeline` can read it at deploy time without a direct CloudFormation dependency.
+
+### WebPipeline
+
+The `WebPipeline` (in the `Games-WEB-Common` stack) is a CodePipeline that deploys the web application. It is triggered by pushes to the `main` branch of `RooksAndWallsWeb`.
+
+**Stages:**
+
+1. **Source** — pulls the source from GitHub via CodeStar Connections.
+2. **Build** — CodeBuild runs `npm ci && npm run build`, producing the static `dist/` output as a build artifact. This single build is shared across all deployment waves.
+3. **Deploy-Wave-N** — for each environment wave, a CodeBuild action:
+   - Reads the CloudFront distribution ID from SSM.
+   - Writes `envConfig.json` with environment-specific values (`apiBaseUrl`, `wsBaseUrl`) derived from the CDK config.
+   - Runs `aws s3 sync` to upload the build artifact and `envConfig.json` to the environment's S3 bucket.
+   - Runs `aws cloudfront create-invalidation` to flush the CDN cache.
+
+### envConfig.json
+
+The frontend app fetches `/envConfig.json` at startup to get environment-specific configuration. This file is not stored in the frontend repository — it is written to S3 by the `WebPipeline` deploy step. Its shape is:
+
+```json
+{ "apiBaseUrl": "https://beta.api.games.leonunes.me", "wsBaseUrl": "wss://beta.api.games.leonunes.me" }
+```
+
+The values are constructed from `WebEnvironmentConfig.backendSubdomain` + `DnsConfig.hostedZoneName` in `lib/config/config.ts`.
+
 ## Service
 ### Environment Variables
 The infrastructure creates `/etc/games/infra.env` with infrastructure-owned variables used by deployment scripts and Nginx templating. These are the variables defined in it:

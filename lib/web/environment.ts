@@ -72,6 +72,22 @@ export class WebEnvironmentStack extends cdk.Stack {
                 cachePolicy: cloudfront.CachePolicy.CACHING_OPTIMIZED,
             },
             defaultRootObject: 'index.html',
+            // S3 returns 403 (not 404) for missing objects in private buckets with OAC.
+            // Both are mapped to index.html so React Navigation handles client-side routing.
+            errorResponses: [
+                {
+                    httpStatus: 403,
+                    responseHttpStatus: 200,
+                    responsePagePath: '/index.html',
+                    ttl: cdk.Duration.seconds(0),
+                },
+                {
+                    httpStatus: 404,
+                    responseHttpStatus: 200,
+                    responsePagePath: '/index.html',
+                    ttl: cdk.Duration.seconds(0),
+                },
+            ],
             domainNames: [`${environment.subdomain}.${dns.hostedZoneName}`],
             certificate: certificate,
             priceClass: cloudfront.PriceClass.PRICE_CLASS_100,

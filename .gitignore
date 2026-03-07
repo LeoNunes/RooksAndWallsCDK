@@ -9,3 +9,6 @@ cdk.out
 
 # TypeScript build output
 dist
+
+# Worktrees
+.worktrees/

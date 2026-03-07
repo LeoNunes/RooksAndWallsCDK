@@ -31,6 +31,7 @@ export default class Backend extends Construct {
                     new EnvironmentStage(this, `${environment.name}-EnvironmentStage`, {
                         stageName: `Backend-${environment.name}-Stage`,
                         appName: appName,
+                        appConfig: props,
                         environment: environment,
                         dns: dns,
                         stackProps: {

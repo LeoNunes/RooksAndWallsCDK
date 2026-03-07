@@ -23,6 +23,7 @@ export class WebCommonStack extends cdk.Stack {
             web,
             dns,
             awsAccount: awsEnvironment.account,
+            appConfig: props,
         });
     }
 }

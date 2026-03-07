@@ -5,12 +5,16 @@ import * as iam from 'aws-cdk-lib/aws-iam';
 import * as logs from 'aws-cdk-lib/aws-logs';
 import * as route53 from 'aws-cdk-lib/aws-route53';
 import * as secretsmanager from 'aws-cdk-lib/aws-secretsmanager';
-import { DnsConfig, EnvironmentConfig } from '../config/config_def';
+import * as ssm from 'aws-cdk-lib/aws-ssm';
+import { AppConfig, DnsConfig, EnvironmentConfig } from '../config/config_def';
 import cloudWatchConfigFactory from '../../assets/ec2_config/cloudwatch-config-factory';
+import { CognitoConstruct } from '../auth/cognito';
+import { UsersTableConstruct } from '../auth/users-table';
 
 interface EnvironmentStackProps {
     stackProps: cdk.StackProps;
     appName: string;
+    appConfig: AppConfig;
     environment: EnvironmentConfig;
     dns: DnsConfig;
 }
@@ -30,7 +34,8 @@ export class EnvironmentStack extends cdk.Stack {
         const securityGroup = this.createSecurityGroup(props, vpc);
         const role = this.createInstanceRole(props);
         const secret = this.createEnvironmentSecret(props, role);
-        const init = this.createCfnInit(props);
+        const cognito = this.createCognito(props, role);
+        const init = this.createCfnInit(props, cognito);
         this.createLogGroups(props);
 
         // https://docs.aws.amazon.com/cdk/api/v1/docs/aws-ec2-readme.html#configuring-instance-metadata-service-imds
@@ -53,6 +58,34 @@ export class EnvironmentStack extends cdk.Stack {
         this.tag(role, appName, environment.name);
         this.tag(securityGroup, appName, environment.name);
         this.tag(instance, appName, environment.name);
+    }
+
+    private createCognito(props: EnvironmentStackProps, instanceRole: iam.IRole) {
+        const { appName, appConfig, environment, dns } = props;
+        const webUrl = `https://${environment.subdomain}.${dns.hostedZoneName}`;
+
+        const cognito = new CognitoConstruct(this, 'Cognito', {
+            appConfig,
+            environment,
+            webCallbackUrls: [webUrl, `${webUrl}/oauth/callback`],
+        });
+
+        new UsersTableConstruct(this, 'UsersTable', {
+            environmentName: environment.name,
+            instanceRole,
+        });
+
+        // Store Cognito values in SSM so the web pipeline can read them at deploy time
+        new ssm.StringParameter(this, 'CognitoUserPoolIdParam', {
+            parameterName: `/${appName}/BE/${environment.name}/CognitoUserPoolId`,
+            stringValue: cognito.userPool.userPoolId,
+        });
+        new ssm.StringParameter(this, 'CognitoUserPoolClientIdParam', {
+            parameterName: `/${appName}/BE/${environment.name}/CognitoUserPoolClientId`,
+            stringValue: cognito.userPoolClient.userPoolClientId,
+        });
+
+        return cognito;
     }
 
     private createEnvironmentSecret(props: EnvironmentStackProps, role: iam.IRole) {
@@ -139,7 +172,7 @@ export class EnvironmentStack extends cdk.Stack {
         return role;
     }
 
-    private createCfnInit(props: EnvironmentStackProps) {
+    private createCfnInit(props: EnvironmentStackProps, cognito: CognitoConstruct) {
         const { appName, environment } = props;
 
         const cloudWatchRestartHandle = new ec2.InitServiceRestartHandle();
@@ -150,7 +183,7 @@ export class EnvironmentStack extends cdk.Stack {
                 envVariables: new ec2.InitConfig([
                     ec2.InitFile.fromString(
                         '/etc/games/infra.env',
-                        this.getServiceEnvironmentVariables(props),
+                        this.getServiceEnvironmentVariables(props, cognito),
                     ),
                 ]),
                 preInstall: new ec2.InitConfig([
@@ -193,13 +226,16 @@ export class EnvironmentStack extends cdk.Stack {
         return initData;
     }
 
-    private getServiceEnvironmentVariables(props: EnvironmentStackProps) {
+    private getServiceEnvironmentVariables(props: EnvironmentStackProps, cognito: CognitoConstruct) {
         const variables: Record<Uppercase<string>, string> = {
             GAMES_PORT: props.environment.application.servicePort.toString(),
             GAMES_ENVIRONMENT: props.environment.name.toLowerCase(),
             GAMES_SECRET_NAME: `games/${props.environment.name.toLowerCase()}/secrets`,
-            GAMES_HOSTED_ZONE_NAME: props.dns.hostedZoneName,   
+            GAMES_HOSTED_ZONE_NAME: props.dns.hostedZoneName,
             GAMES_SERVER_NAME: this.serverName(props),
+            GAMES_COGNITO_USER_POOL_ID: cognito.userPool.userPoolId,
+            GAMES_COGNITO_REGION: cdk.Stack.of(this).region,
+            GAMES_USERS_TABLE_NAME: `games-${props.environment.name.toLowerCase()}-users`,
         };
 
         return Object.keys(variables)
@@ -257,6 +293,7 @@ export class EnvironmentStack extends cdk.Stack {
     }
 }
 
+// EnvironmentStageProps already includes appConfig via EnvironmentStackProps
 interface EnvironmentStageProps extends cdk.StageProps, EnvironmentStackProps {}
 
 /** Stage in infrastructure pipeline responsible for building the backend infrastructure for a given environment. */

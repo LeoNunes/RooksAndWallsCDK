@@ -6,7 +6,7 @@ import * as logs from 'aws-cdk-lib/aws-logs';
 import * as codepipeline from 'aws-cdk-lib/aws-codepipeline';
 import * as codepipelineActions from 'aws-cdk-lib/aws-codepipeline-actions';
 import * as codebuild from 'aws-cdk-lib/aws-codebuild';
-import { DnsConfig, WebConfig } from '../config/config_def';
+import { AppConfig, DnsConfig, WebConfig } from '../config/config_def';
 import { WebEnvironmentStack } from './environment';
 import { groupBy } from '../helper/collections';
 
@@ -15,6 +15,7 @@ interface WebPipelineProps {
     web: WebConfig;
     dns: DnsConfig;
     awsAccount: string;
+    appConfig: AppConfig;
 }
 
 /**
@@ -106,7 +107,11 @@ export default class WebPipeline extends Construct {
                 const ssmParamName = `/${appName}/WEB/${environment.name}/DistributionId`;
                 const apiBaseUrl = `https://${environment.backendSubdomain}.${dns.hostedZoneName}`;
                 const wsBaseUrl = `wss://${environment.backendSubdomain}.${dns.hostedZoneName}`;
-                const envConfigJson = JSON.stringify({ apiBaseUrl, wsBaseUrl });
+                const cognitoUserPoolIdParam = `/${appName}/BE/${environment.name}/CognitoUserPoolId`;
+                const cognitoUserPoolClientIdParam = `/${appName}/BE/${environment.name}/CognitoUserPoolClientId`;
+                const backendEnv = props.appConfig.backend.environments.find(e => e.name === environment.name);
+                const cognitoDomainPrefix = backendEnv?.auth.cognitoDomain ?? environment.name.toLowerCase();
+                const awsRegion = props.appConfig.awsEnvironment.region;
 
                 const deployProject = new codebuild.PipelineProject(
                     this,
@@ -120,7 +125,9 @@ export default class WebPipeline extends Construct {
                                 build: {
                                     commands: [
                                         `DISTRIBUTION_ID=$(aws ssm get-parameter --name "${ssmParamName}" --region us-east-1 --query Parameter.Value --output text)`,
-                                        `echo '${envConfigJson}' > envConfig.json`,
+                                        `COGNITO_USER_POOL_ID=$(aws ssm get-parameter --name "${cognitoUserPoolIdParam}" --query Parameter.Value --output text)`,
+                                        `COGNITO_USER_POOL_CLIENT_ID=$(aws ssm get-parameter --name "${cognitoUserPoolClientIdParam}" --query Parameter.Value --output text)`,
+                                        `jq -n --arg apiBaseUrl "${apiBaseUrl}" --arg wsBaseUrl "${wsBaseUrl}" --arg cognitoUserPoolId "$COGNITO_USER_POOL_ID" --arg cognitoUserPoolClientId "$COGNITO_USER_POOL_CLIENT_ID" --arg cognitoDomain "${cognitoDomainPrefix}.auth.${awsRegion}.amazoncognito.com" '{"apiBaseUrl":$apiBaseUrl,"wsBaseUrl":$wsBaseUrl,"cognitoUserPoolId":$cognitoUserPoolId,"cognitoUserPoolClientId":$cognitoUserPoolClientId,"cognitoDomain":$cognitoDomain}' > envConfig.json`,
                                         `aws s3 cp envConfig.json s3://${bucketName}/envConfig.json`,
                                         `aws s3 sync . s3://${bucketName} --delete --exclude envConfig.json`,
                                         `aws cloudfront create-invalidation --distribution-id $DISTRIBUTION_ID --paths "/*"`,
@@ -164,6 +171,8 @@ export default class WebPipeline extends Construct {
                         actions: ['ssm:GetParameter'],
                         resources: [
                             `arn:aws:ssm:us-east-1:${props.awsAccount}:parameter${ssmParamName}`,
+                            `arn:aws:ssm:${awsRegion}:${props.awsAccount}:parameter${cognitoUserPoolIdParam}`,
+                            `arn:aws:ssm:${awsRegion}:${props.awsAccount}:parameter${cognitoUserPoolClientIdParam}`,
                         ],
                     }),
                 );

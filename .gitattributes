@@ -1,0 +1,9 @@
+# Normalize line endings to LF in the repo; convert on checkout for Windows-only files
+* text=auto eol=lf
+
+*.bat text eol=crlf
+*.cmd text eol=crlf
+
+# Binary files
+*.png binary
+*.jpg binary

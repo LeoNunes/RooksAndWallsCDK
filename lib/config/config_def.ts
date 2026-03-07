@@ -54,6 +54,10 @@ export type WebEnvironmentConfig = {
     };
 };
 
+export type AuthConfig = {
+    cognitoDomain: string; // e.g. "games-beta"
+};
+
 export type EnvironmentConfig = {
     name: string;
     description?: string;
@@ -72,5 +76,6 @@ export type EnvironmentConfig = {
         port: number;
         path: string;
     };
+    auth: AuthConfig;
 };
 

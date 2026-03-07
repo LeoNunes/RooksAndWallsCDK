@@ -74,6 +74,9 @@ const appConfig: AppConfig = {
                     protocol: 'HTTPS',
                     port: 80,
                 },
+                auth: {
+                    cognitoDomain: 'games-beta',
+                },
             },
         ],
     },

@@ -18,7 +18,7 @@ export class UsersTableConstruct extends Construct {
             tableName: `games-${props.environmentName.toLowerCase()}-users`,
             partitionKey: { name: 'userId', type: dynamodb.AttributeType.STRING },
             billingMode: dynamodb.BillingMode.PAY_PER_REQUEST,
-            removalPolicy: cdk.RemovalPolicy.RETAIN,
+            removalPolicy: cdk.RemovalPolicy.DESTROY,
         });
 
         this.table.addGlobalSecondaryIndex({

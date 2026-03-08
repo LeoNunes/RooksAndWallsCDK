@@ -7,12 +7,12 @@ import * as origins from 'aws-cdk-lib/aws-cloudfront-origins';
 import * as route53 from 'aws-cdk-lib/aws-route53';
 import * as route53Targets from 'aws-cdk-lib/aws-route53-targets';
 import * as ssm from 'aws-cdk-lib/aws-ssm';
-import { DnsConfig, WebEnvironmentConfig } from '../config/config_def';
+import { DnsConfig, EnvironmentConfig } from '../config/config_def';
 
 interface WebEnvironmentStackProps {
     stackProps: cdk.StackProps;
     appName: string;
-    environment: WebEnvironmentConfig;
+    environment: EnvironmentConfig;
     dns: DnsConfig;
 }
 
@@ -31,7 +31,7 @@ export class WebEnvironmentStack extends cdk.Stack {
         this.storeDistributionId(appName, environment, distribution);
     }
 
-    private createBucket(appName: string, environment: WebEnvironmentConfig): s3.Bucket {
+    private createBucket(appName: string, environment: EnvironmentConfig): s3.Bucket {
         return new s3.Bucket(this, 'AssetsBucket', {
             bucketName: this.bucketName(appName, environment),
             blockPublicAccess: s3.BlockPublicAccess.BLOCK_ALL,
@@ -42,7 +42,7 @@ export class WebEnvironmentStack extends cdk.Stack {
 
     private createCertificate(
         appName: string,
-        environment: WebEnvironmentConfig,
+        environment: EnvironmentConfig,
         dns: DnsConfig,
     ): acm.Certificate {
         const hostedZone = route53.HostedZone.fromHostedZoneAttributes(this, 'HostedZone', {
@@ -50,16 +50,17 @@ export class WebEnvironmentStack extends cdk.Stack {
             hostedZoneId: dns.hostedZoneId,
         });
 
+        const domainName = this.webDomainName(environment, dns);
         return new acm.Certificate(this, 'Certificate', {
             certificateName: `${appName}-WEB-${environment.name}`,
-            domainName: `${environment.subdomain}.${dns.hostedZoneName}`,
+            domainName: domainName,
             validation: acm.CertificateValidation.fromDns(hostedZone),
         });
     }
 
     private createDistribution(
         appName: string,
-        environment: WebEnvironmentConfig,
+        environment: EnvironmentConfig,
         dns: DnsConfig,
         bucket: s3.Bucket,
         certificate: acm.Certificate,
@@ -88,14 +89,14 @@ export class WebEnvironmentStack extends cdk.Stack {
                     ttl: cdk.Duration.seconds(0),
                 },
             ],
-            domainNames: [`${environment.subdomain}.${dns.hostedZoneName}`],
+            domainNames: [this.webDomainName(environment, dns)],
             certificate: certificate,
             priceClass: cloudfront.PriceClass.PRICE_CLASS_100,
         });
     }
 
     private createDnsRecord(
-        environment: WebEnvironmentConfig,
+        environment: EnvironmentConfig,
         dns: DnsConfig,
         distribution: cloudfront.Distribution,
     ) {
@@ -104,8 +105,9 @@ export class WebEnvironmentStack extends cdk.Stack {
             hostedZoneId: dns.hostedZoneId,
         });
 
+        const recordName = environment.web.subdomain + (dns.commonSubdomain ? `.${dns.commonSubdomain}` : '');
         new route53.ARecord(this, 'DnsARecord', {
-            recordName: environment.subdomain,
+            recordName: recordName,
             zone: hostedZone,
             target: route53.RecordTarget.fromAlias(
                 new route53Targets.CloudFrontTarget(distribution),
@@ -115,7 +117,7 @@ export class WebEnvironmentStack extends cdk.Stack {
 
     private storeDistributionId(
         appName: string,
-        environment: WebEnvironmentConfig,
+        environment: EnvironmentConfig,
         distribution: cloudfront.Distribution,
     ) {
         new ssm.StringParameter(this, 'DistributionIdParameter', {
@@ -125,12 +127,17 @@ export class WebEnvironmentStack extends cdk.Stack {
         });
     }
 
-    static bucketName(appName: string, environment: WebEnvironmentConfig): string {
+    static bucketName(appName: string, environment: EnvironmentConfig): string {
         return `${appName}-web-${environment.name}`.toLowerCase();
     }
 
-    private bucketName(appName: string, environment: WebEnvironmentConfig): string {
+    private bucketName(appName: string, environment: EnvironmentConfig): string {
         return WebEnvironmentStack.bucketName(appName, environment);
+    }
+
+    private webDomainName(environment: EnvironmentConfig, dns: DnsConfig): string {
+        const recordName = environment.web.subdomain + (dns.commonSubdomain ? `.${dns.commonSubdomain}` : '');
+        return `${recordName}.${dns.hostedZoneName}`;
     }
 }
 

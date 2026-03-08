@@ -6,12 +6,14 @@ import * as codepipelineActions from 'aws-cdk-lib/aws-codepipeline-actions';
 import * as codebuild from 'aws-cdk-lib/aws-codebuild';
 import * as codedeploy from 'aws-cdk-lib/aws-codedeploy';
 import * as logs from 'aws-cdk-lib/aws-logs';
-import { BackendConfig } from '../config/config_def';
+import { BackendConfig, EnvironmentConfig } from '../config/config_def';
+import { NonEmptyArray } from '../helper/type_helper';
 import { groupBy } from '../helper/collections';
 
 interface ApplicationPipelineProps {
     appName: string;
     backend: BackendConfig;
+    environments: NonEmptyArray<EnvironmentConfig>;
 }
 
 /**
@@ -21,8 +23,8 @@ export default class ApplicationPipeline extends Construct {
     constructor(scope: Construct, id: string, props: ApplicationPipelineProps) {
         super(scope, id);
 
-        const { appName, backend } = props;
-        const { applicationPipeline: pipelineProps, environments } = backend;
+        const { appName, backend, environments } = props;
+        const { pipeline: pipelineProps } = backend;
 
         const artifactBucket = new s3.Bucket(this, 'ArtifactBucket', {
             removalPolicy: cdk.RemovalPolicy.DESTROY,

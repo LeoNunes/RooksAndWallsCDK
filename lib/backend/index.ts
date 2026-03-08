@@ -18,9 +18,9 @@ export default class Backend extends Construct {
     }
 
     private createEnvironmentStages(props: BackendProps) {
-        const { appName, backend, awsEnvironment, dns } = props;
+        const { appName, environments, awsEnvironment, dns } = props;
 
-        const waves = groupBy(backend.environments, env => env.deployment.wave);
+        const waves = groupBy(environments, env => env.deployment.wave);
         const waveNumbers = Object.keys(waves).map(Number).sort();
 
         for (const waveNumber of waveNumbers) {
@@ -31,7 +31,6 @@ export default class Backend extends Construct {
                     new EnvironmentStage(this, `${environment.name}-EnvironmentStage`, {
                         stageName: `Backend-${environment.name}-Stage`,
                         appName: appName,
-                        appConfig: props,
                         environment: environment,
                         dns: dns,
                         stackProps: {

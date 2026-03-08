@@ -5,16 +5,14 @@ import * as iam from 'aws-cdk-lib/aws-iam';
 import * as logs from 'aws-cdk-lib/aws-logs';
 import * as route53 from 'aws-cdk-lib/aws-route53';
 import * as secretsmanager from 'aws-cdk-lib/aws-secretsmanager';
-import * as ssm from 'aws-cdk-lib/aws-ssm';
-import { AppConfig, DnsConfig, EnvironmentConfig } from '../config/config_def';
+import { DnsConfig, EnvironmentConfig } from '../config/config_def';
 import cloudWatchConfigFactory from '../../assets/ec2_config/cloudwatch-config-factory';
-import { CognitoConstruct } from '../auth/cognito';
-import { UsersTableConstruct } from '../auth/users-table';
+import { CognitoConstruct } from './constructs/cognito';
+import { UsersTableConstruct } from './constructs/users-table';
 
 interface EnvironmentStackProps {
     stackProps: cdk.StackProps;
     appName: string;
-    appConfig: AppConfig;
     environment: EnvironmentConfig;
     dns: DnsConfig;
 }
@@ -34,7 +32,8 @@ export class EnvironmentStack extends cdk.Stack {
         const securityGroup = this.createSecurityGroup(props, vpc);
         const role = this.createInstanceRole(props);
         const secret = this.createEnvironmentSecret(props, role);
-        const cognito = this.createCognito(props, role);
+        const cognito = this.createCognito(props);
+        const userTable = this.createUsersTable(props, role);
         const init = this.createCfnInit(props, cognito);
         this.createLogGroups(props);
 
@@ -43,7 +42,7 @@ export class EnvironmentStack extends cdk.Stack {
             vpc: vpc,
             role: role,
             securityGroup: securityGroup,
-            instanceType: new ec2.InstanceType(environment.instances.instanceType),
+            instanceType: new ec2.InstanceType(environment.backend.instances.instanceType),
             machineImage: ec2.MachineImage.latestAmazonLinux2(),
             init: init,
             initOptions: {
@@ -60,32 +59,26 @@ export class EnvironmentStack extends cdk.Stack {
         this.tag(instance, appName, environment.name);
     }
 
-    private createCognito(props: EnvironmentStackProps, instanceRole: iam.IRole) {
-        const { appName, appConfig, environment, dns } = props;
-        const webUrl = `https://${environment.subdomain}.${dns.hostedZoneName}`;
+    private createCognito(props: EnvironmentStackProps) {
+        const { appName, environment, dns } = props;
+        const webRecordName = environment.web.subdomain + (dns.commonSubdomain ? `.${dns.commonSubdomain}` : '');
+        const webUrl = `https://${webRecordName}.${dns.hostedZoneName}`;
 
         const cognito = new CognitoConstruct(this, 'Cognito', {
-            appConfig,
+            appName,
             environment,
             webCallbackUrls: [webUrl, `${webUrl}/oauth/callback`],
         });
 
+        return cognito;
+    }
+
+    private createUsersTable(props: EnvironmentStackProps, instanceRole: iam.IRole) {
+        const { environment } = props;
         new UsersTableConstruct(this, 'UsersTable', {
             environmentName: environment.name,
             instanceRole,
         });
-
-        // Store Cognito values in SSM so the web pipeline can read them at deploy time
-        new ssm.StringParameter(this, 'CognitoUserPoolIdParam', {
-            parameterName: `/${appName}/BE/${environment.name}/CognitoUserPoolId`,
-            stringValue: cognito.userPool.userPoolId,
-        });
-        new ssm.StringParameter(this, 'CognitoUserPoolClientIdParam', {
-            parameterName: `/${appName}/BE/${environment.name}/CognitoUserPoolClientId`,
-            stringValue: cognito.userPoolClient.userPoolClientId,
-        });
-
-        return cognito;
     }
 
     private createEnvironmentSecret(props: EnvironmentStackProps, role: iam.IRole) {
@@ -121,7 +114,7 @@ export class EnvironmentStack extends cdk.Stack {
         });
 
         const recordName =
-            environment.subdomain + (dns.commonSubdomain ? `.${dns.commonSubdomain}` : '');
+            environment.backend.subdomain + (dns.commonSubdomain ? `.${dns.commonSubdomain}` : '');
         new route53.ARecord(this, `DNS_ARecord_${appName}_${environment.name}`, {
             recordName: recordName,
             zone: hostedZone,
@@ -228,7 +221,7 @@ export class EnvironmentStack extends cdk.Stack {
 
     private getServiceEnvironmentVariables(props: EnvironmentStackProps, cognito: CognitoConstruct) {
         const variables: Record<Uppercase<string>, string> = {
-            GAMES_PORT: props.environment.application.servicePort.toString(),
+            GAMES_PORT: props.environment.backend.application.servicePort.toString(),
             GAMES_ENVIRONMENT: props.environment.name.toLowerCase(),
             GAMES_SECRET_NAME: `games/${props.environment.name.toLowerCase()}/secrets`,
             GAMES_HOSTED_ZONE_NAME: props.dns.hostedZoneName,
@@ -247,7 +240,7 @@ export class EnvironmentStack extends cdk.Stack {
         const { environment, dns } = props;
 
         return [
-            environment.subdomain,
+            environment.backend.subdomain,
             dns.commonSubdomain,
             dns.hostedZoneName,
         ]
@@ -293,7 +286,6 @@ export class EnvironmentStack extends cdk.Stack {
     }
 }
 
-// EnvironmentStageProps already includes appConfig via EnvironmentStackProps
 interface EnvironmentStageProps extends cdk.StageProps, EnvironmentStackProps {}
 
 /** Stage in infrastructure pipeline responsible for building the backend infrastructure for a given environment. */

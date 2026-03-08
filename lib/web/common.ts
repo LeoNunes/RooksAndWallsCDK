@@ -16,14 +16,15 @@ export class WebCommonStack extends cdk.Stack {
     }
 
     private createPipeline(props: WebCommonStackProps) {
-        const { appName, web, dns, awsEnvironment } = props;
+        const { appName, web, environments, dns, awsEnvironment } = props;
 
         new WebPipeline(this, 'Pipeline', {
             appName,
             web,
+            environments,
             dns,
             awsAccount: awsEnvironment.account,
-            appConfig: props,
+            awsRegion: awsEnvironment.region,
         });
     }
 }

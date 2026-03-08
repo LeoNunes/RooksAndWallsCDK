@@ -33,8 +33,8 @@ export class EnvironmentStack extends cdk.Stack {
         const role = this.createInstanceRole(props);
         const secret = this.createEnvironmentSecret(props, role);
         const cognito = this.createCognito(props);
-        const userTable = this.createUsersTable(props, role);
-        const init = this.createCfnInit(props, cognito);
+        const usersTable = this.createUsersTable(props, role);
+        const init = this.createCfnInit(props, cognito, usersTable);
         this.createLogGroups(props);
 
         // https://docs.aws.amazon.com/cdk/api/v1/docs/aws-ec2-readme.html#configuring-instance-metadata-service-imds
@@ -64,18 +64,16 @@ export class EnvironmentStack extends cdk.Stack {
         const webRecordName = environment.web.subdomain + (dns.commonSubdomain ? `.${dns.commonSubdomain}` : '');
         const webUrl = `https://${webRecordName}.${dns.hostedZoneName}`;
 
-        const cognito = new CognitoConstruct(this, 'Cognito', {
+        return new CognitoConstruct(this, 'Cognito', {
             appName,
             environment,
             webCallbackUrls: [webUrl, `${webUrl}/oauth/callback`],
         });
-
-        return cognito;
     }
 
     private createUsersTable(props: EnvironmentStackProps, instanceRole: iam.IRole) {
         const { environment } = props;
-        new UsersTableConstruct(this, 'UsersTable', {
+        return new UsersTableConstruct(this, 'UsersTable', {
             environmentName: environment.name,
             instanceRole,
         });
@@ -165,7 +163,7 @@ export class EnvironmentStack extends cdk.Stack {
         return role;
     }
 
-    private createCfnInit(props: EnvironmentStackProps, cognito: CognitoConstruct) {
+    private createCfnInit(props: EnvironmentStackProps, cognito: CognitoConstruct, usersTable: UsersTableConstruct) {
         const { appName, environment } = props;
 
         const cloudWatchRestartHandle = new ec2.InitServiceRestartHandle();
@@ -176,7 +174,7 @@ export class EnvironmentStack extends cdk.Stack {
                 envVariables: new ec2.InitConfig([
                     ec2.InitFile.fromString(
                         '/etc/games/infra.env',
-                        this.getServiceEnvironmentVariables(props, cognito),
+                        this.getServiceEnvironmentVariables(props, cognito, usersTable),
                     ),
                 ]),
                 preInstall: new ec2.InitConfig([
@@ -219,7 +217,7 @@ export class EnvironmentStack extends cdk.Stack {
         return initData;
     }
 
-    private getServiceEnvironmentVariables(props: EnvironmentStackProps, cognito: CognitoConstruct) {
+    private getServiceEnvironmentVariables(props: EnvironmentStackProps, cognito: CognitoConstruct, usersTable: UsersTableConstruct): string {
         const variables: Record<Uppercase<string>, string> = {
             GAMES_PORT: props.environment.backend.application.servicePort.toString(),
             GAMES_ENVIRONMENT: props.environment.name.toLowerCase(),
@@ -228,7 +226,7 @@ export class EnvironmentStack extends cdk.Stack {
             GAMES_SERVER_NAME: this.serverName(props),
             GAMES_COGNITO_USER_POOL_ID: cognito.userPool.userPoolId,
             GAMES_COGNITO_REGION: cdk.Stack.of(this).region,
-            GAMES_USERS_TABLE_NAME: `games-${props.environment.name.toLowerCase()}-users`,
+            GAMES_USERS_TABLE_NAME: usersTable.table.tableName,
         };
 
         return Object.keys(variables)

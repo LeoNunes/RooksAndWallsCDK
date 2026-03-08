@@ -10,6 +10,7 @@ export type AppConfig = {
     dns: DnsConfig;
     backend: BackendConfig;
     web: WebConfig;
+    environments: NonEmptyArray<EnvironmentConfig>;
 };
 
 export type CdkConfig = {
@@ -25,10 +26,15 @@ export type DnsConfig = {
 };
 
 export type BackendConfig = {
-    applicationPipeline: {
+    pipeline: {
         repo: RepoConfig;
     };
-    environments: NonEmptyArray<EnvironmentConfig>;
+};
+
+export type WebConfig = {
+    pipeline: {
+        repo: RepoConfig;
+    };
 };
 
 export type RepoConfig = {
@@ -38,28 +44,24 @@ export type RepoConfig = {
     connectionARN: string;
 };
 
-export type WebConfig = {
-    webPipeline: {
-        repo: RepoConfig;
-    };
-    environments: NonEmptyArray<WebEnvironmentConfig>;
-};
-
-export type WebEnvironmentConfig = {
-    name: string;
-    subdomain: string;
-    backendSubdomain: string;
-    deployment: {
-        wave: number;
-    };
-};
-
 export type EnvironmentConfig = {
     name: string;
     description?: string;
-    subdomain: string;
     deployment: {
         wave: number;
+    };
+    web: WebEnvironmentConfig;
+    backend: BackendEnvironmentConfig;
+};
+
+export type WebEnvironmentConfig = {
+    subdomain: string;
+};
+
+export type BackendEnvironmentConfig = {
+    subdomain: string;
+    auth: {
+        cognitoDomain: string;
     };
     instances: {
         instanceType: string;
@@ -73,4 +75,3 @@ export type EnvironmentConfig = {
         path: string;
     };
 };
-

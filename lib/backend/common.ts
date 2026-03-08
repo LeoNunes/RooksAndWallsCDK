@@ -16,9 +16,9 @@ export class CommonStack extends cdk.Stack {
     }
 
     private createPipeline(props: CommonStackProps) {
-        const { appName, backend } = props;
+        const { appName, backend, environments } = props;
 
-        new ApplicationPipeline(this, 'Pipeline', { appName, backend });
+        new ApplicationPipeline(this, 'Pipeline', { appName, backend, environments });
     }
 }
 

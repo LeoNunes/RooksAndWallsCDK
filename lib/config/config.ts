@@ -17,7 +17,7 @@ const appConfig: AppConfig = {
     dns: {
         hostedZoneId: 'Z06232281J47SNE8ZWHNB',
         hostedZoneName: 'leonunes.me',
-        commonSubdomain: 'api.games',
+        commonSubdomain: 'games',
     },
     cdk: {
         infrastructurePipeline: {
@@ -28,40 +28,38 @@ const appConfig: AppConfig = {
             },
         },
     },
-    web: {
-        webPipeline: {
-            repo: {
-                ...gitHubConfig,
-                name: 'RooksAndWallsWeb',
-                branch: 'main',
-            },
-        },
-        environments: [
-            {
-                name: 'Beta',
-                subdomain: 'beta.games',
-                backendSubdomain: 'beta.api.games',
-                deployment: {
-                    wave: 0,
-                },
-            },
-        ],
-    },
     backend: {
-        applicationPipeline: {
+        pipeline: {
             repo: {
                 ...gitHubConfig,
                 name: 'RooksAndWallsServer',
                 branch: 'main',
             },
         },
-        environments: [
-            {
-                name: 'Beta',
-                description: `Beta environment for ${appName}`,
+    },
+    web: {
+        pipeline: {
+            repo: {
+                ...gitHubConfig,
+                name: 'RooksAndWallsWeb',
+                branch: 'main',
+            },
+        },
+    },
+    environments: [
+        {
+            name: 'Beta',
+            description: `Beta environment for ${appName}`,
+            deployment: {
+                wave: 0,
+            },
+            web: {
                 subdomain: 'beta',
-                deployment: {
-                    wave: 0,
+            },
+            backend: {
+                subdomain: 'beta.api',
+                auth: {
+                    cognitoDomain: 'games-beta',
                 },
                 application: {
                     servicePort: 8080,
@@ -75,8 +73,8 @@ const appConfig: AppConfig = {
                     port: 80,
                 },
             },
-        ],
-    },
+        },
+    ],
 };
 
 export default appConfig;

@@ -18,9 +18,9 @@ export default class Web extends Construct {
     }
 
     private createEnvironmentStages(props: WebProps) {
-        const { appName, web, awsEnvironment, dns } = props;
+        const { appName, environments, awsEnvironment, dns } = props;
 
-        const waves = groupBy(web.environments, env => env.deployment.wave);
+        const waves = groupBy(environments, env => env.deployment.wave);
         const waveNumbers = Object.keys(waves).map(Number).sort();
 
         for (const waveNumber of waveNumbers) {

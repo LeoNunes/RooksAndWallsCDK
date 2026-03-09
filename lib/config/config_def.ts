@@ -52,6 +52,14 @@ export type EnvironmentConfig = {
     };
     web: WebEnvironmentConfig;
     backend: BackendEnvironmentConfig;
+    development?: DevelopmentConfig;
+};
+
+export type DevelopmentConfig = {
+    /** Local web URL added to Cognito's allowed callback/logout URLs (e.g. 'http://localhost:5173'). */
+    localWebUrl?: string;
+    /** If true, creates an IAM role in the account that developers can assume for DynamoDB access. */
+    allowLocalDdbAccess?: boolean;
 };
 
 export type WebEnvironmentConfig = {

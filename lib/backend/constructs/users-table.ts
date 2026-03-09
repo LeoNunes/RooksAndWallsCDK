@@ -6,6 +6,7 @@ import * as iam from 'aws-cdk-lib/aws-iam';
 export interface UsersTableProps {
     environmentName: string;
     instanceRole: iam.IRole;
+    allowLocalAccess: boolean;
 }
 
 export class UsersTableConstruct extends Construct {
@@ -28,5 +29,14 @@ export class UsersTableConstruct extends Construct {
         });
 
         this.table.grantReadWriteData(props.instanceRole);
+
+        if (props.allowLocalAccess) {
+            const localDevRole = new iam.Role(this, 'LocalDevRole', {
+                roleName: `games-${props.environmentName.toLowerCase()}-local-dev`,
+                assumedBy: new iam.AccountPrincipal(cdk.Stack.of(this).account),
+                description: `Allows local development access to ${props.environmentName} DynamoDB tables`,
+            });
+            this.table.grantReadWriteData(localDevRole);
+        }
     }
 }

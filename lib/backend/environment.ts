@@ -63,11 +63,20 @@ export class EnvironmentStack extends cdk.Stack {
         const { appName, environment, dns } = props;
         const webRecordName = environment.web.subdomain + (dns.commonSubdomain ? `.${dns.commonSubdomain}` : '');
         const webUrl = `https://${webRecordName}.${dns.hostedZoneName}`;
+        const localUrl = environment.development?.localWebUrl;
+
+        const callbackUrls = [webUrl, `${webUrl}/oauth/callback`];
+        const logoutUrls = [webUrl];
+        if (localUrl) {
+            callbackUrls.push(localUrl, `${localUrl}/oauth/callback`);
+            logoutUrls.push(localUrl);
+        }
 
         return new CognitoConstruct(this, 'Cognito', {
             appName,
             environment,
-            webCallbackUrls: [webUrl, `${webUrl}/oauth/callback`],
+            callbackUrls,
+            logoutUrls,
         });
     }
 
@@ -76,6 +85,7 @@ export class EnvironmentStack extends cdk.Stack {
         return new UsersTableConstruct(this, 'UsersTable', {
             environmentName: environment.name,
             instanceRole,
+            allowLocalAccess: environment.development?.allowLocalDdbAccess ?? false,
         });
     }
 

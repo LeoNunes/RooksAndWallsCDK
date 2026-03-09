@@ -73,6 +73,10 @@ const appConfig: AppConfig = {
                     port: 80,
                 },
             },
+            development: {
+                localWebUrl: 'http://localhost:5173',
+                allowLocalDdbAccess: true,
+            },
         },
     ],
 };

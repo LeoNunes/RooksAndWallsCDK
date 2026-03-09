@@ -8,7 +8,8 @@ import { EnvironmentConfig } from '../../config/config_def';
 export interface CognitoProps {
     appName: string;
     environment: EnvironmentConfig;
-    webCallbackUrls: string[];
+    callbackUrls: string[];
+    logoutUrls: string[];
 }
 
 export class CognitoConstruct extends Construct {
@@ -53,9 +54,8 @@ export class CognitoConstruct extends Construct {
                     cognito.OAuthScope.OPENID,
                     cognito.OAuthScope.PROFILE,
                 ],
-                // TODO: Add localhost for development in the config file. Verify if this is safe.
-                callbackUrls: [...props.webCallbackUrls, 'http://localhost:5173'],
-                logoutUrls: [...props.webCallbackUrls, 'http://localhost:5173'],
+                callbackUrls: props.callbackUrls,
+                logoutUrls: props.logoutUrls,
             },
             supportedIdentityProviders: [
                 cognito.UserPoolClientIdentityProvider.COGNITO,
